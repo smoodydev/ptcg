@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+    }
+
+    h1 {
+        text-align: center;
+        margin-top: 40px;
+    }
+
+    .container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    p {
+        text-align: center;
+    }
+
+    .hidden-input {
+        display: none;
+    }
+
+    .option-button {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .option-button:focus {
+        outline: none;
+    }
+
+    .selected {
+        background-color: #45a049;
+    }
+</style>
+<script>
+    function selectOption(option) {
+        var hiddenInput = document.getElementById('hiddenInput');
+        hiddenInput.value = option;
+
+        // Deselect all option buttons
+        var buttons = document.getElementsByClassName('option-button');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.remove('selected');
+        }
+
+        // Select the clicked option button
+        option.classList.add('selected');
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Welcome to the Game!</h1>
+    <p>Please select your option:</p>
+    <form action="/select_option" method="POST">
+        <input type="hidden" id="hiddenInput" name="option">
+        <button type="button" class="option-button" onclick="selectOption('fire')">Fire</button>
+        <button type="button" class="option-button" onclick="selectOption('water')">Water</button>
+        <button type="button" class="option-button" onclick="selectOption('grass')">Grass</button>
+        <br><br>
+        <input type="submit" value="Submit">
+    </form>
+</div>
+{% endblock %}
