@@ -3,6 +3,8 @@ from flask import Flask, redirect, jsonify, render_template, request, flash, ses
 from flask_pymongo import PyMongo, ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from base_set import base_set_cards
+
 if os.path.exists("env.py"):
     import env
 
@@ -93,7 +95,7 @@ def profile():
     if not player_name:
         return redirect(url_for('login'))
 
-    return render_template('profile.html', player_name=player_name)
+    return render_template('profile.html', player_name=player_name, deck=get_deck())
 
 @app.route('/profile/change_password', methods=['POST'])
 def change_password():
@@ -137,18 +139,59 @@ fire_deck = [3, 24, 24, 46, 46, 46, 46, 23, 23, 28, 28, 28, 98, 98, 98, 98, 98, 
 water_deck = [2, 42, 42, 63, 63, 63, 63, 38, 38, 59, 59, 59, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102]
 
 
+start_trainers = [81, 91, 92, 92, 94, 95]
 
 
-
-
-
+starter_deck = [
+    47, 47, 47,        # diglett
+    52, 52, 52, 52,     # machop
+    34, 34,             #Machoke
+    8, #Machamp
+    60, 60, 60, 60, # ponyta
+    46, 46, 46, 46, # Charmander
+    24, 24,  # Charmeleon
+    28, #growlithe
+    61, 61, # Rattata
+    26, # Dratini
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, #fighting
+    98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, #fire
+    81, 91, 92, 93, 94, 95 # trainers 
+]
+"""
+3×	Diglett	Fighting	Common
+4×	Machop	Fighting	Common
+2×	Machoke	Fighting	Uncommon
+1×	Machamp	Fighting	Rare Holo
+4×	Ponyta	Fire	Common
+4×	Charmander	Fire	Common
+2×	Charmeleon	Fire	Uncommon
+1×	Growlithe	Fire	Uncommon
+2×	Rattata	Colorless	Common
+1×	Dratini	Colorless	Uncommon
+1×	Bill	T	Common
+1×	Energy Removal	T	Common
+1×	Energy Retrieval	T	Uncommon
+1×	Gust of Wind	T	Common
+1×	Pokédex	T	Uncommon
+2×	Potion	T	Common
+2×	Switch	T	Common
+14×	Fighting Energy	Fighting E	—
+14×	Fire Energy
+"""
 
 
 @app.route('/select_option', methods=["GET", "POST"])
 def select_option():
+    print(len(starter_deck) + len(start_trainers))
     if request.method == "POST":
         if "coin" not in session:
-            print(request.form["option"])
+            if request.form["option"] == "grass":
+                print(len(grass_deck) + len(start_trainers)*2)
+            elif request.form["option"] == "fire":
+                print(len(fire_deck))
+            elif request.form["option"] == "water":
+                print(len(water_deck))
+            
     # Access the logged-in user's name from the session
     player_name = session.get('player_name')
 
@@ -160,7 +203,20 @@ def select_option():
 
 
 
-
+def get_deck():
+    if "deck" not in session:
+        a_set = base_set_cards
+        starter_deck.sort()
+        deck = [a_set[card] for card in starter_deck]
+        print(len(deck))
+        count = {}
+        for num in deck:
+            if num in count:
+                count[num] += 1
+            else:
+                count[num] = 1
+        print(count)
+        return count
 
 
 

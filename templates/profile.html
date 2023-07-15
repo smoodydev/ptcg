@@ -16,4 +16,17 @@
 
     <input type="submit" value="Change Password">
 </form>
+
+{% if deck %}
+<h1>Current Deck</h1>
+
+<div class="row">
+{% for card, counted in deck.items() %}
+<p>
+{{ card }} x{{ counted }}
+</p>
+{% endfor %}
+</div>
+{% endif %}
+</div>
 {% endblock %}
