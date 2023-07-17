@@ -8,7 +8,7 @@ class Card:
         return self.name
 
 class PokemonCard(Card):
-    def __init__(self, name, hp, stage, attacks, weakness, resistance, retreat_cost):
+    def __init__(self, name, hp, stage, attacks):
         super().__init__(name)
         self.hp = hp
         self.stage = stage
@@ -94,17 +94,17 @@ class Player:
 
 
 
-# pikachu = PokemonCard("Pikachu", 60, 0, ["Thunder Shock", "Quick Attack"])
+pikachu = PokemonCard("Pikachu", 60, 0, ["Thunder Shock", "Quick Attack"])
 
-# energy_el = EnergyCard("Electric Energy", "Electric")
+energy_el = EnergyCard("Electric Energy", "Electric")
 
 
 
-# deck1 = [pikachu, pikachu,pikachu,pikachu,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el]
-# deck2 = [pikachu, pikachu, pikachu, pikachu, energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el]
+deck1 = [pikachu, pikachu,pikachu,pikachu,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el]
+deck2 = [pikachu, pikachu, pikachu, pikachu, energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el,energy_el]
 
-# player1 = Player("Stephen", Deck(deck1.copy()))
-# player2 = Player("Someone", Deck(deck2.copy()))
+player1 = Player("Stephen", Deck(deck1.copy()))
+player2 = Player("Someone", Deck(deck2.copy()))
 
 
 def opening_draw(player):
@@ -118,21 +118,20 @@ def opening_draw(player):
 
 
 def open_loop(player, deck):
-    print(player, deck)
     print(player.name)
-    player.deck.cards.extend(player.hand)
     player.hand = []
+    player.deck = Deck(deck.copy())
     opening_draw(player)
 
-def match_opening(player1, player2):
+def match_opening():
     opening_draw(player1)
     opening_draw(player2)
 
-    # while not player1.has_basic():
-    #     open_loop(player1, player1.deck)
+    while not player1.has_basic():
+        open_loop(player1, deck1)
     
-    # while not player2.has_basic():
-    #     open_loop(player2, player2.deck)
+    while not player2.has_basic():
+        open_loop(player2, deck2)
 
     print(player1.hand_detail())
 
@@ -160,7 +159,7 @@ def player_select_active(player):
     player_select_active(player)
     
 
-def tell_game_state(player1, player2):
+def tell_game_state():
     print("player 1")
     player1.tell_deck()
     player1.tell_hand()
@@ -181,12 +180,8 @@ def tell_game_state(player1, player2):
 # game_loop()
 
 
-def start_game(playerA, playerB):
-    decka = Deck(playerA["deck"])
-    playera = Player(playerA["name"], decka)
-    deckb = Deck(playerB["deck"])
-    playerb = Player(playerB["name"], deckb)
-    match_opening(playera, playerb)
-    # player_select_active(player1)
-    # player_select_active(player2)
-    tell_game_state(playera, playerb)
+def start_game():
+    match_opening()
+    player_select_active(player1)
+    player_select_active(player2)
+    tell_game_state()

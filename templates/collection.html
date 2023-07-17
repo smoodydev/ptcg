@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    function toggleCards(cardType) {
+        var cards = document.getElementsByClassName('card-row');
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            if (card.dataset.type === cardType || cardType === 'all') {
+                card.style.display = 'table-row';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<h1>{{ player.player_name }} Collected Cards</h1>
+{% if player.collectedCards %}
+
+<div>
+    <div class="tab active" onclick="toggleCards('all')">All</div>
+    {% for card_type in cardTypes %}
+    <div class="tab" onclick="toggleCards('{{ card_type }}')">{{ card_type }}</div>
+    {% endfor %}
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>Card ID</th>
+            <th>Card Name</th>
+            <th>Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for card_id, quantity in player.collectedCards.items() %}
+        <tr class="card-row">
+
+            <td>{{ card_id }}</td>
+            <td>{{ cards[card_id|int] }}</td>
+            <td>{{ quantity }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% else %}
+NO CARDS FOUND
+{% endif %}
+{% endblock %}

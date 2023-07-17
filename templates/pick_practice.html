@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+{% for character in npcs %}
+<p>{{ character.name }} <a href="{{ url_for('practice_npc', npc=character.id) }}">FIGHT</a></p>
+
+{% endfor %}
+{% endblock %}

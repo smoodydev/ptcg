@@ -4,6 +4,9 @@ from flask_pymongo import PyMongo, ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from base_set import base_set_cards
+from game import start_game
+
+
 
 if os.path.exists("env.py"):
     import env
@@ -97,6 +100,23 @@ def profile():
 
     return render_template('profile.html', player_name=player_name, deck=get_deck())
 
+
+@app.route('/collection')
+def collection():
+    # Access the logged-in user's name from the session
+    player_name = session.get('player_name')
+
+    # If the user is not logged in, redirect to the login page
+    if not player_name:
+        return redirect(url_for('login'))
+    player = mongo.db.players.find_one({"player_name": player_name})
+
+    # add_cards_to_collection(player["_id"], ["1","2","3","4"])
+    player = mongo.db.players.find_one({"player_name": player_name})
+    cards = base_set_cards
+    return render_template('collection.html', player=player, cards=cards)
+
+
 @app.route('/profile/change_password', methods=['POST'])
 def change_password():
     player_name = session.get('player_name')
@@ -179,7 +199,6 @@ starter_deck = [
 14×	Fire Energy
 """
 
-
 @app.route('/select_option', methods=["GET", "POST"])
 def select_option():
     print(len(starter_deck) + len(start_trainers))
@@ -217,6 +236,85 @@ def get_deck():
                 count[num] = 1
         print(count)
         return count
+
+
+
+
+
+@app.route
+@app.route('/play/<match_id>', methods=["GET", "POST"])
+def play_match(match_id):
+    match = mongo.db.match.find_one(match_id=match_id)
+    if match:
+        return match
+    return redirect(url_for('profile'))
+
+
+@app.route
+@app.route('/practice/', methods=["GET", "POST"])
+def practice():
+    npc_choices = [{"name": "Starter", "id": "starter"}]
+
+    return render_template("pick_practice.html", npcs=npc_choices)
+
+
+@app.route
+@app.route('/practice/<npc>', methods=["GET", "POST"])
+def practice_npc(npc):
+    if "npc" not in session:
+        print(npc)
+        npc_choices = {
+            "starter": {
+                "name": "Starter",
+                "deck": starter_deck
+            }
+        }
+
+        enemy = npc_choices[npc]
+        print(enemy)
+    start_game({"name": "Stephen", "deck": starter_deck}, enemy)
+    return render_template("match.html", enemy=enemy)
+
+
+# @app.route
+# @app.route('/practice/<match_id>', methods=["GET", "POST"])
+# def practice_match(match_id):
+#     match = mongo.db.npc_match.find_one(match_id=match_id)
+#     if match:
+#         return match
+#     return redirect(url_for('profile'))
+
+
+
+
+
+
+
+
+
+def add_cards_to_collection(player_id, card_ids):
+    # Assuming you have a MongoDB client and appropriate collections set up
+    player_collection = mongo.db['players']
+    
+    # Fetch the player document
+    player = player_collection.find_one({'_id': player_id})
+    if player is None:
+        print("Player not found!")
+        return
+    
+    # Get the existing collected cards dictionary or initialize it if it doesn't exist
+    collected_cards = player.get('collectedCards', {})
+    
+    # Add 4 copies of each card ID to the collected cards dictionary
+    for card_id in card_ids:
+        collected_cards[card_id] = collected_cards.get(card_id, 0) + 4
+    
+    # Update the player document with the modified collected cards dictionary
+    player_collection.update_one({'_id': player_id}, {'$set': {'collectedCards': collected_cards}})
+    
+
+
+
 
 
 
