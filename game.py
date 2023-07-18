@@ -208,4 +208,4 @@ def start_game(playerA, playerB):
     # player_select_active(player2)
     tell_game_state(playera, playerb)
     print(playera.get_state())
-    return (playera.get_state(), playerb.get_state())
+    return playera.get_state(), playerb.get_state()

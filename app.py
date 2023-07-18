@@ -303,6 +303,11 @@ def practice():
 @app.route('/practice/<npc>', methods=["GET", "POST"])
 @login_required
 def practice_npc(npc):
+    """
+    Handles Starting a new game.
+    """
+    if request.method == "POST":
+        print("action")
 
     if "npc" not in session:
         print(npc)
@@ -314,15 +319,17 @@ def practice_npc(npc):
         }
 
         enemy = npc_choices[npc]
-        print("HEdre")
-        game_state = start_game({"name": "Stephen", "deck": starter_deck.copy()}, enemy)
+        
+        player, npc = start_game({"name": "Stephen", "deck": starter_deck.copy()}, enemy)
+        turn = 0
+        game_state = [player, npc, turn]
         session["npc"] = game_state
     else:
         game_state = session["npc"]
 
     cards_req = [*set(starter_deck.copy())]
     card_db = make_card(cards_req)
-    print(card_db)
+
     return render_template("match.html", game=json.dumps(game_state), card_db=json.dumps(card_db))
 
 
