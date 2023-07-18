@@ -45,6 +45,7 @@ class Deck:
 
 
 
+
 class Player:
     def __init__(self, name, deck):
         self.name = name
@@ -89,6 +90,18 @@ class Player:
                     self.bench.append(card)
                     return True
         return False
+
+    def get_state(self):
+        object_of = {
+            "name": self.name,
+            "discard": self.discard,
+            "hand": self.hand,
+            "active": self.active,
+            "bench": self.bench,
+            "deck": self.deck.cards
+
+        }
+        return object_of
 
 
 
@@ -174,6 +187,9 @@ def tell_game_state(player1, player2):
     print(str(player2.active))
 
 
+
+# get_game_state
+
 # match_opening()
 # player_select_active(player1)
 # player_select_active(player2)
@@ -183,6 +199,7 @@ def tell_game_state(player1, player2):
 
 def start_game(playerA, playerB):
     decka = Deck(playerA["deck"])
+
     playera = Player(playerA["name"], decka)
     deckb = Deck(playerB["deck"])
     playerb = Player(playerB["name"], deckb)
@@ -190,3 +207,5 @@ def start_game(playerA, playerB):
     # player_select_active(player1)
     # player_select_active(player2)
     tell_game_state(playera, playerb)
+    print(playera.get_state())
+    return (playera.get_state(), playerb.get_state())

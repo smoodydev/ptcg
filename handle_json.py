@@ -5,6 +5,7 @@ all_cards = {}
 pokemon_fields = ["hp", "evolvesFrom", "abilities", "attacks", "weaknesses", "retreatCost"]
 
 def make_cards():
+    all_cards = {}
     print(cards[0]["data"].keys())
     print(cards[0]["data"])
     print(" ")
@@ -14,7 +15,8 @@ def make_cards():
         card = {
             "name": i["name"],
             "supertype": i["supertype"],
-            "id": i["id"]
+            "id": i["id"],
+            "img": i["images"]["small"]
         }
         
         if i["supertype"] == "Pokemon":
@@ -32,20 +34,19 @@ def make_cards():
             card["rules"] = i["rules"]
 
         all_cards[i["number"]] = card
+    return all_cards
         # if i["number"] == "102":
         #     # print(i)
-    print(all_cards["1"])
-    print(all_cards["85"])
-    print(all_cards["102"])
 
 
 
-def make_card(deck)
+
+def make_card(deck):
     all_cards = make_cards()
-    deck_back
+    card_db = {}
     for card in deck:
-        pass
+        card_db[str(card)] = all_cards[str(card)]
+    return card_db
 
 
-
-# make_cards()
+# make_card([97, 34, 98, 8, 28, 46, 47, 92, 81, 52, 93, 24, 26, 91, 60, 61, 94, 95])

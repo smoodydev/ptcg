@@ -8,6 +8,10 @@
 
     <h3>{{ pack["name"] }}</h3>
     <p>{{ pack["description"] }}</p>
+    <form method="post">
+        <input type="hidden" name="pack_id" value="{{ id }}">
+        <button type="submit">Submit</button>
+    </form>
 
 {% endfor %}
 {% endblock %}

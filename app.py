@@ -5,8 +5,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from base_set import base_set_cards
 from game import start_game
+from handle_json import make_card
 
+import json
 import functools
+import random
 
 if os.path.exists("env.py"):
     import env
@@ -30,6 +33,10 @@ def login_required(func):
         return func(*args, **kwargs)
     return wrapper_login_required
 
+
+@app.template_filter('dictsort_custom')
+def dictsort_custom(d):
+    return sorted(d.items(), key=lambda x: int(x[0]))
 
 
 @app.route("/")
@@ -106,8 +113,9 @@ def login():
 def profile():
     # Access the logged-in user's name from the session
     player_name = session.get('player_name')
-
-    return render_template('profile.html', player_name=player_name, deck=get_deck())
+    player = mongo.db.players.find_one({"player_name": player_name})
+    mongo.db.players.update_one({'player_name': player_name}, {'$set': {'credits': 100}})
+    return render_template('profile.html', player=player, deck=get_deck())
 
 
 
@@ -232,6 +240,23 @@ def collection():
 @app.route('/card_shop', methods=["GET", "POST"])
 @login_required
 def card_shop():
+    packs = {
+        1:{"name":"Base Set", "description": "1 Rare, 3 Uncommon, 6, Common, 1 Energy Card", "code": "base_booster", "cost": 50}, 
+        2:{"name":"Base Set (3)", "description": "1 Rare, 1 Uncommon, 1 Common", "code": "base_booster2", "cost": 35}, 
+        3:{"name":"Base Set (Limited)", "description": "2 Rare, 5 Uncommon, 13 Common, 5 Energy", "code": "base_booster3", "cost": 110}
+        }
+    if request.method == "POST":
+        player_name = session.get('player_name')
+        player = mongo.db.players.find_one({"player_name": player_name})
+        if player["credits"]:
+            pack_id = request.form.get("pack_id", None)
+            print(pack_id)
+            req_pack = packs[int(pack_id)]
+            if req_pack["cost"] <= player["credits"]:
+                cards = generate_pack_cards(req_pack)
+                print(cards)
+                add_cards_to_collection(player["_id"], cards)
+                return cards
     player_name = session.get('player_name')
     player = mongo.db.players.find_one({"player_name": player_name})
     packs = {1:{"name":"Base Set", "description": "1 Rare, 3 Uncommon, 6, Common, 1 Energy Card", "code": "base_booster"}, 2:{"name":"Base Set (3)", "description": "1 Rare, 1 Uncommon, 1 Common", "code": "base_booster2"}, 3:{"name":"Base Set (Limited)", "description": "1 Rare, 4 Uncommon, 10 Common, 5 Energy", "code": "base_booster3"}}
@@ -278,19 +303,27 @@ def practice():
 @app.route('/practice/<npc>', methods=["GET", "POST"])
 @login_required
 def practice_npc(npc):
+
     if "npc" not in session:
         print(npc)
         npc_choices = {
             "starter": {
                 "name": "Starter",
-                "deck": starter_deck
+                "deck": starter_deck.copy()
             }
         }
 
         enemy = npc_choices[npc]
-        print(enemy)
-    start_game({"name": "Stephen", "deck": starter_deck}, enemy)
-    return render_template("match.html", enemy=enemy)
+        print("HEdre")
+        game_state = start_game({"name": "Stephen", "deck": starter_deck.copy()}, enemy)
+        session["npc"] = game_state
+    else:
+        game_state = session["npc"]
+
+    cards_req = [*set(starter_deck.copy())]
+    card_db = make_card(cards_req)
+    print(card_db)
+    return render_template("match.html", game=json.dumps(game_state), card_db=json.dumps(card_db))
 
 
 # @app.route
@@ -305,7 +338,28 @@ def practice_npc(npc):
 
 
 
-
+def generate_pack_cards(x):
+    packs = {
+        "base_booster" : {
+            "set": "base_set",
+            "rare": 1,
+            "uncommon": 3,
+            "common": 6,
+            "energy": 1
+            }
+        }
+    pack = packs[x["code"]]
+    cards = []
+    if pack["set"] == "base_set":
+        for i in range(pack["rare"]):
+            cards.append(random.randint(1, 16))
+        for i in range(pack["uncommon"]):
+            cards.append(random.randint(17, 43))
+        for i in range(pack["common"]):
+            cards.append(random.randint(43, 96))
+        for i in range(pack["energy"]):
+            cards.append(random.randint(97, 102))
+    return cards
 
 
 
@@ -324,9 +378,11 @@ def add_cards_to_collection(player_id, card_ids):
     
     # Add 4 copies of each card ID to the collected cards dictionary
     for card_id in card_ids:
-        collected_cards[card_id] = collected_cards.get(card_id, 0) + 4
+        c = str(card_id)
+        collected_cards[c] = collected_cards.get(c, 0) + 1
     
     # Update the player document with the modified collected cards dictionary
+    print(player_collection.find_one({'_id': player_id}))
     player_collection.update_one({'_id': player_id}, {'$set': {'collectedCards': collected_cards}})
     
 

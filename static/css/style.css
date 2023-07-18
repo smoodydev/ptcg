@@ -51,26 +51,40 @@ button[type="submit"]:hover {
 
 
 .center {
-    text-align: center;
+  text-align: center;
 }
 
 .hidden-input {
-    display: none;
+  display: none;
 }
 
 .option-button {
-    padding: 10px 20px;
-    background-color: #4caf50;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .option-button:focus {
-    outline: none;
+  outline: none;
 }
 
 .selected {
-    background-color: #45a049;
+  background-color: #45a049;
+}
+
+.pkcard {
+  background-color: white;
+  background-size: 100%;
+  background-repeat: no-repeat;
+  aspect-ratio: 63/87;
+  height: 100%;
+}
+
+.card-hand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

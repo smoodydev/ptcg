@@ -5,6 +5,7 @@
 
     <title>Pokémon Trading Card Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/smudge12.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- <link rel="stylesheet" type="text/css" href="styles.css"> -->
     <style>
         * {
@@ -30,26 +31,34 @@
             align-items: center;
             justify-content: center;
         }
+
+        .pkcard {
+            background-color: white;
+        }
+
+        .card-hand {
+            display: flex;
+        }
     </style>
 </head>
 
 <body>
     <div id="game-board" style="height: 100vh">
-        <div id="opponent-hand" style="height: 10%;">
+        <div id="opponent-hand" class="card-hand" style="height: 10%;">
             <!-- Opponent hand elements -->
         </div>
 
 
         <div id="opponent-side" class="row" style="height: 30%">
 
-            
+
             <div id="opponent-pile" class="c2">
                 <div id="opponent-discard"></div>
                 <div id="opponent-deck"></div>
 
             </div>
             <div id="opponent-field" class="c8">
-                
+
                 <div id="opponent-bench" style="height: 15%;">
                     <!-- opponent bench elements -->
                 </div>
@@ -95,12 +104,44 @@
 
         </div>
 
-        <div id="player-hand" style="height: 10%;">
+        <div id="player-hand" class="card-hand" style="height: 10%;">
             <!-- Player hand elements -->
         </div>
 
     </div>
 </body>
+<script>
+    let game_state = JSON.parse({{ game | tojson }});
+    let cardDB = JSON.parse({{ card_db | tojson }});
+    let player = game_state[0];
+    let opponent = game_state[1];
+    let player_hand = player["hand"];
+    let opponent_hand = opponent["hand"];
+
+    console.log(cardDB);
+    function populate_hand(who, cards) {
+        console.log(player);
+        cards.forEach((card) => {
+            let where = who + "-hand";
+
+            // Create a new card element
+            const cardElement = document.createElement('div');
+            // cardElement.textContent = cardDB[card].name;
+            cardElement.classList.add('pkcard');
+            if (who == "player") {
+                cardElement.style.backgroundImage = `url(${cardDB[card].img})`;
+            }else{
+                cardElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
+            }
+
+            document.getElementById(where).appendChild(cardElement);
+        })
+
+    };
+    populate_hand("player", player_hand);
+    populate_hand("opponent", opponent_hand);
+
+</script>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 

@@ -35,10 +35,10 @@
         </tr>
     </thead>
     <tbody>
-        {% for card_id, quantity in player.collectedCards.items() %}
+        {% for card_id, quantity in player.collectedCards|dictsort_custom %}
         <tr class="card-row">
 
-            <td>{{ card_id }}</td>
+            <td>{{ card_id|int }}</td>
             <td>{{ cards[card_id|int] }}</td>
             <td>{{ quantity }}</td>
         </tr>
