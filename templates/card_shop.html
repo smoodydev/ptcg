@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+{% for id, pack in packs.items() %}
+
+    <h3>{{ pack["name"] }}</h3>
+    <p>{{ pack["description"] }}</p>
+
+{% endfor %}
+{% endblock %}

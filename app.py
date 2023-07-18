@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from base_set import base_set_cards
 from game import start_game
 
-
+import functools
 
 if os.path.exists("env.py"):
     import env
@@ -21,11 +21,23 @@ app.secret_key = os.environ.get("SECRETKEY", "SomeSecret")
 mongo = PyMongo(app)
 app.templates = ""
 
+
+def login_required(func):
+    @functools.wraps(func)
+    def wrapper_login_required(*args, **kwargs):
+        if "player_name" not in session:
+            return redirect(url_for('login'))
+        return func(*args, **kwargs)
+    return wrapper_login_required
+
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
 @app.route("/manage-cards")
+@login_required
 def manage_cards():
     return render_template("mange_cards.html")
 
@@ -90,39 +102,21 @@ def login():
 
 
 @app.route('/profile')
+@login_required
 def profile():
     # Access the logged-in user's name from the session
     player_name = session.get('player_name')
 
-    # If the user is not logged in, redirect to the login page
-    if not player_name:
-        return redirect(url_for('login'))
-
     return render_template('profile.html', player_name=player_name, deck=get_deck())
 
 
-@app.route('/collection')
-def collection():
-    # Access the logged-in user's name from the session
-    player_name = session.get('player_name')
 
-    # If the user is not logged in, redirect to the login page
-    if not player_name:
-        return redirect(url_for('login'))
-    player = mongo.db.players.find_one({"player_name": player_name})
-
-    # add_cards_to_collection(player["_id"], ["1","2","3","4"])
-    player = mongo.db.players.find_one({"player_name": player_name})
-    cards = base_set_cards
-    return render_template('collection.html', player=player, cards=cards)
 
 
 @app.route('/profile/change_password', methods=['POST'])
+@login_required
 def change_password():
     player_name = session.get('player_name')
-
-    if not player_name:
-        return redirect(url_for('login'))
 
     current_password = request.form['currentPassword']
     new_password = request.form['newPassword']
@@ -147,6 +141,7 @@ def change_password():
 
 
 @app.route('/logout')
+@login_required
 def logout():
     # Clear the session and redirect to the login page
     session.clear()
@@ -200,6 +195,7 @@ starter_deck = [
 """
 
 @app.route('/select_option', methods=["GET", "POST"])
+@login_required
 def select_option():
     print(len(starter_deck) + len(start_trainers))
     if request.method == "POST":
@@ -214,12 +210,32 @@ def select_option():
     # Access the logged-in user's name from the session
     player_name = session.get('player_name')
 
-    # If the user is not logged in or their name is not stored in the session, redirect to the login page
-    if not player_name:
-        return redirect(url_for('login'))
-
     return render_template('options.html')
 
+
+
+@app.route('/collection')
+@login_required
+def collection():
+    # Access the logged-in user's name from the session
+    player_name = session.get('player_name')
+    player = mongo.db.players.find_one({"player_name": player_name})
+
+    # add_cards_to_collection(player["_id"], ["1","2","3","4"])
+    player = mongo.db.players.find_one({"player_name": player_name})
+    cards = base_set_cards
+    return render_template('collection.html', player=player, cards=cards)
+
+
+
+
+@app.route('/card_shop', methods=["GET", "POST"])
+@login_required
+def card_shop():
+    player_name = session.get('player_name')
+    player = mongo.db.players.find_one({"player_name": player_name})
+    packs = {1:{"name":"Base Set", "description": "1 Rare, 3 Uncommon, 6, Common, 1 Energy Card", "code": "base_booster"}, 2:{"name":"Base Set (3)", "description": "1 Rare, 1 Uncommon, 1 Common", "code": "base_booster2"}, 3:{"name":"Base Set (Limited)", "description": "1 Rare, 4 Uncommon, 10 Common, 5 Energy", "code": "base_booster3"}}
+    return render_template('card_shop.html', player=player, packs=packs)
 
 
 def get_deck():
@@ -240,9 +256,8 @@ def get_deck():
 
 
 
-
-@app.route
 @app.route('/play/<match_id>', methods=["GET", "POST"])
+@login_required
 def play_match(match_id):
     match = mongo.db.match.find_one(match_id=match_id)
     if match:
@@ -250,16 +265,18 @@ def play_match(match_id):
     return redirect(url_for('profile'))
 
 
-@app.route
+
 @app.route('/practice/', methods=["GET", "POST"])
+@login_required
 def practice():
     npc_choices = [{"name": "Starter", "id": "starter"}]
 
     return render_template("pick_practice.html", npcs=npc_choices)
 
 
-@app.route
+
 @app.route('/practice/<npc>', methods=["GET", "POST"])
+@login_required
 def practice_npc(npc):
     if "npc" not in session:
         print(npc)
