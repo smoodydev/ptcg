@@ -298,17 +298,20 @@ def practice():
 
     return render_template("pick_practice.html", npcs=npc_choices)
 
+@app.route('/clearpractice/')
+@login_required
+def clearpractice():
+    del session["npc"]
+    return redirect(url_for('practice'))
 
 
-@app.route('/practice/<npc>', methods=["GET", "POST"])
+@app.route('/practice/<npc>')
 @login_required
 def practice_npc(npc):
+    
     """
     Handles Starting a new game.
     """
-    if request.method == "POST":
-        print("action")
-
     if "npc" not in session:
         print(npc)
         npc_choices = {
@@ -330,7 +333,57 @@ def practice_npc(npc):
     cards_req = [*set(starter_deck.copy())]
     card_db = make_card(cards_req)
 
-    return render_template("match.html", game=json.dumps(game_state), card_db=json.dumps(card_db))
+    return render_template("match.html", game=json.dumps(game_state), turn =game_state[2], card_db=json.dumps(card_db))
+
+
+@app.route('/match/npc', methods=["POST"])
+@login_required
+def perform_action():
+    game_state = session["npc"]
+    player = game_state[0]
+    opponent = game_state[1]
+    turn = game_state[2]
+    a = request.get_json().get("data")
+
+    fail_response= {"v": False, "message": "Could not play this card"}
+    valid_response= {"v": True, "message": "Card Played"}
+
+    if a["turn"] == game_state[2]:
+        if a["type"] == "hand":
+            index = a["card_index"]
+            
+            if a["card"]["supertype"] == "Pokemon":
+                if a["card"]["subtypes"] == "Basic":
+                    if turn == 0 and player["active"] == None:
+                        player["active"] = {"card": player["hand"].pop(index), "dmg": 0, "energies":[], "status": None, "turn": turn}
+                    elif len(player["bench"]) < 5:
+                        player["bench"].append({"card": player["hand"].pop(index), "dmg": 0, "energies":[], "status": None, "turn": turn})
+                    else:
+                        return jsonify(fail_response), 200
+                    session["npc"][0] = player
+                    session["npc"] = session["npc"]
+                    
+                    return jsonify(valid_response), 200
+
+                elif a["card"]["subtypes"] != "Basic":
+                    target = a["target"]
+                    if target == "active":
+                        print(player["active"]["turn"])
+
+                
+            else:
+                print("NAH")
+                response_data= {"v": False, "message": "Could not play this card"}
+                return jsonify(fail_response), 200
+            return jsonify(fail_response), 200
+            # except Exception:
+            #     print("GONE WRONGS")
+            #     return "False"
+        else:
+            print("POO")
+
+    print(session["npc"])
+    return "Hello"
 
 
 # @app.route

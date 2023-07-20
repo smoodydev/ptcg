@@ -1,5 +1,8 @@
 import random
 
+from handle_json import make_card
+
+
 class Card:
     def __init__(self, name):
         self.name = name
@@ -75,11 +78,10 @@ class Player:
         print(self.deck.remaining())
 
     def has_basic(self):
-        print(self.name)
-        for card in self.hand:
-            print("Check")
-            if isinstance(card, PokemonCard):
-                if card.stage == 0:
+        pos_cards = make_card(self.hand)
+        for id, card in pos_cards.items():
+            if card["supertype"] == "Pokemon":
+                if card["subtypes"] == "Basic":
                     return True
         return False
 
@@ -141,11 +143,12 @@ def match_opening(player1, player2):
     opening_draw(player1)
     opening_draw(player2)
 
-    # while not player1.has_basic():
-    #     open_loop(player1, player1.deck)
     
-    # while not player2.has_basic():
-    #     open_loop(player2, player2.deck)
+    while not player1.has_basic():
+        open_loop(player1, player1.deck)
+    
+    while not player2.has_basic():
+        open_loop(player2, player2.deck)
 
     print(player1.hand_detail())
 

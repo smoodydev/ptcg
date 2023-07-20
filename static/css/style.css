@@ -76,15 +76,59 @@ button[type="submit"]:hover {
 }
 
 .pkcard {
-  background-color: white;
+
   background-size: 100%;
   background-repeat: no-repeat;
   aspect-ratio: 63/87;
   height: 100%;
+  text-align: center;
+  color: white;
 }
 
 .card-hand {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.bench {
+  display: flex;
+  justify-content: space-around;
+}
+
+#player-discard,
+#opponent-discard {
+  padding-top: 11%;
+  height: 33.333%;
+  justify-content: center;
+  display: flex;
+
+
+}
+
+#player-deck,
+#opponent-deck {
+  height: 33.333%;
+  padding-bottom: 11%;
+  padding-top: 11.333%;
+  justify-content: center;
+  display: flex;
+
+}
+
+.energy-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+#middle {
+  display: flex;
+  justify-content: space-between;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spacer2{
+  flex: 2;
 }

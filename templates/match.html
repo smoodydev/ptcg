@@ -32,9 +32,6 @@
             justify-content: center;
         }
 
-        .pkcard {
-            background-color: white;
-        }
 
         .card-hand {
             display: flex;
@@ -85,10 +82,21 @@
             height: auto;
             margin-bottom: 10px;
         }
+
+        #followingElement {
+            width: 50px;
+            height: 50px;
+            background-color: #3498db;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            /* Ensure the following element doesn't interfere with mouse events */
+        }
     </style>
 </head>
 
 <body>
+
     <div id="game-board" style="height: 100vh">
         <div id="opponent-hand" class="card-hand" style="height: 10%;">
             <!-- Opponent hand elements -->
@@ -99,18 +107,19 @@
 
 
             <div id="opponent-pile" class="c2">
-                <div id="opponent-discard"></div>
                 <div id="opponent-deck"></div>
+                <div id="opponent-discard"></div>
 
             </div>
             <div id="opponent-field" class="c8">
 
-                <div id="opponent-bench" style="height: 15%;">
+                <div id="opponent-bench" class="bench" style="height: 33.3%;">
                     <!-- opponent bench elements -->
                 </div>
 
-                <div id="opponent-active-board" class="active-board" style="height: 10%;">
-                    <div id="opponent-active" style="height: 100%; width: 10%; background-color: white;"></div>
+
+                <div id="opponent-active-board" class="active-board" style="height: 33.3%;">
+                    <div id="opponent-active" style="height: 100%; width: 10%;"></div>
                 </div>
 
             </div>
@@ -122,9 +131,31 @@
         </div>
 
 
-        <div id="middle" style="height: 20%;">
-            <!-- Opponent bench elements -->
+
+
+
+
+        <div id="middle" style="height: 20%; display: flex;">
+            <div class="spacer2">
+                <ul>
+                    <li>
+                        Maybe what you can do here?
+                    </li>
+                </ul>
+            </div>
+
+            <p>Turn {{ turn }} </p>
+            <br>
+            <button id="endTurn">End Turn</button>
+            <div class="spacer2"></div>
         </div>
+
+
+
+
+
+
+
 
         <div id="player-side" class="row" style="height: 30%">
 
@@ -133,12 +164,14 @@
             </div>
 
             <div id="player-field" class="c8">
-                <div id="player-active-board" class="active-board" style="height: 10%;">
-                    <div id="player-active" style="height: 100%; width: 10%; background-color: white;"></div>
+                <div id="player-active-board" class="active-board" style="height: 33.3%;">
+                    <div id="player-active" style="height: 100%; width: 10%;"></div>
                 </div>
-                <div id="player-bench" style="height: 15%;">
-                    <!-- Player bench elements -->
+
+
+                <div id="player-bench" class="bench" style="height: 33.3%;">
                 </div>
+
 
             </div>
 
@@ -164,13 +197,52 @@
     let opponent = game_state[1];
     let player_hand = player["hand"];
     let opponent_hand = opponent["hand"];
+    let turn = 0;
 
     function clearPopUps() {
         const existingPopups = document.querySelectorAll('.popup-container, .examination-container');
         existingPopups.forEach((popup) => popup.remove());
     }
 
-    function examineCard(card) {
+    let awaiting_target = false;
+    
+    function trackElement(selectedElement, followingElement) {
+        console.log('Selected Element:', selectedElement);
+        // Disable tracking after the element is selected
+        isTrackingEnabled = false;
+        followingElement.remove()
+    }
+
+    function startFollowing() {
+        isTrackingEnabled = true;
+        
+        // Create the following element
+        const followingElement = document.createElement('div');
+        followingElement.setAttribute('id', 'followingElement');
+
+        // Add the following element to the document
+        document.body.appendChild(followingElement);
+
+        // Add event listener to update the position of the following element on mousemove
+        document.addEventListener('mousemove', updateFollowingElementPosition);
+
+        document.body.addEventListener('click', function (event) {
+            if (isTrackingEnabled && event.target.classList.contains('pkcard')) {
+                trackElement(event.target, followingElement);
+            }
+        });
+    }
+
+    function updateFollowingElementPosition(event) {
+        const followingElement = document.getElementById('followingElement');
+        followingElement.style.left = `${event.pageX - 25}px`;
+        followingElement.style.top = `${event.pageY - 25}px`;
+    }
+
+
+
+
+    function examineCard(card, card_index) {
         // Create a card examination container
         const examinationContainer = document.createElement('div');
         examinationContainer.classList.add('examination-container');
@@ -186,7 +258,7 @@
         const playButton = document.createElement('button');
         playButton.textContent = 'Play';
         playButton.addEventListener('click', () => {
-            playCard(card);
+            tryPlayCard(card, card_index);
             // Remove the examination container when the card is played
             examinationContainer.remove();
         });
@@ -209,14 +281,78 @@
         document.body.appendChild(examinationContainer);
     }
 
+    function playAction(data) {
+        location.reload()
+    }
 
-    function playCard(card) {
-        // Implement your logic to play the card
-        console.log(`Playing card: ${card.name}`);
+    function sendAction(data) {
+        console.log(data);
+        fetch('/match/npc', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data
+            }),
+        })
+
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to send the request.');
+                }
+                return response.json();
+            })
+            .then((responseData) => {
+                if (responseData.v) {
+                    playAction()
+                }
+                console.log(responseData.message);
+            })
+            .catch((error) => {
+                console.error('An error occurred while sending the request:', error);
+            });
+    };
+
+    function tryGetTarget() {
+        startFollowing();
+    }
+
+    function tryPlayCard(card, card_index) {
+        if (card["supertype"]) {
+            if (card["subtypes"] != "Basic") {
+                // console.log("PLAYING NOT BASIC");
+                console.log(card);
+                target = tryGetTarget();
+                console.log("PLAYING NOT BASIC");
+            } else {
+                playCard(card, card_index)
+            }
+        }
+
     }
 
 
-    function showOptions(cardId) {
+
+    function playCard(card, card_index) {
+        // Implement your logic to play the card
+        let data = {
+            "type": "hand",
+            "card": card,
+            "card_index": card_index,
+            "turn": turn
+        }
+        sendAction(data);
+
+    }
+
+
+
+
+
+
+
+    function showOptions(cardId, card_index) {
         clearPopUps();
 
         // Create a pop-up container
@@ -230,7 +366,7 @@
             // Implement your logic for the Read option
             const card = cardDB[cardId]; // Assuming a function findCardById(cardId) retrieves card details
             console.log(card);
-            examineCard(card);
+            examineCard(card, card_index);
             popupContainer.remove();
         });
 
@@ -238,6 +374,7 @@
         playButton.textContent = 'Play';
         playButton.addEventListener('click', () => {
             console.log('Play option selected');
+            tryPlayCard(cardDB[cardId], card_index);
             popupContainer.remove();
             // Implement your logic for the Play option
         });
@@ -260,7 +397,7 @@
 
 
     function populate_hand(who, cards) {
-        cards.forEach((card) => {
+        cards.forEach((card, card_index) => {
             let where = who + "-hand";
 
             // Create a new card element
@@ -273,7 +410,7 @@
                     // Perform actions when the card is clicked
                     // Display options or perform any desired functionality
 
-                    showOptions(card);
+                    showOptions(card, card_index);
                 });
             } else {
                 cardElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
@@ -283,8 +420,76 @@
         });
 
     };
+
+    function populate_field(who, field) {
+
+        if (field["active"] && "card" in field["active"]) {
+            let cardElement = document.createElement('div');
+            // cardElement.textContent = cardDB[card].name;
+            cardElement.classList.add('pkcard');
+
+            cardElement.style.backgroundImage = `url(${cardDB[field["active"]["card"]].img})`;
+            cardElement.addEventListener('click', () => {
+                // Perform actions when the card is clicked
+                // Display options or perform any desired functionality
+
+                // showOptions(card, card_index);
+            });
+            document.getElementById(who + "-active").appendChild(cardElement);
+        }
+        for (i in field["bench"]) {
+            card = cardDB[field["bench"][i]["card"]];
+            console.log(card);
+            const cardElement = document.createElement('div');
+            // cardElement.textContent = cardDB[card].name;
+            cardElement.classList.add('pkcard');
+
+            cardElement.style.backgroundImage = `url(${card.img})`;
+            cardElement.addEventListener('click', () => {
+                // Perform actions when the card is clicked
+                // Display options or perform any desired functionality
+
+                // showOptions(card, card_index);
+            });
+            document.getElementById(who + "-bench").appendChild(cardElement);
+        }
+        let cardElement = document.createElement('div');
+        // cardElement.textContent = cardDB[card].name;
+        cardElement.classList.add('pkcard');
+        cardElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
+        cardElement.textContent = field.deck.length
+        document.getElementById(who + "-deck").appendChild(cardElement);
+
+    }
+
+    document.getElementById('endTurn').addEventListener('click', () => {
+        // Send the request to Flask when the button is clicked
+
+        let data = {
+            "type": "endTurn",
+            "turn": turn
+        }
+        sendAction(data);
+
+    });
+
+
+
+    // Event listener for the button click
+    // button.addEventListener('click', (event) => {
+    //     console.log("HAN")
+    // });
+
+
+
+
+
+
     populate_hand("player", player_hand);
     populate_hand("opponent", opponent_hand);
+
+    populate_field("player", player)
+    populate_field("opponent", opponent)
 
 </script>
 
