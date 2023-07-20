@@ -197,41 +197,72 @@
     let opponent = game_state[1];
     let player_hand = player["hand"];
     let opponent_hand = opponent["hand"];
-    let turn = 0;
+    let turn = {{ turn }};
+
+    let selectedHand;
+    let selectedCard;
 
     function clearPopUps() {
         const existingPopups = document.querySelectorAll('.popup-container, .examination-container');
         existingPopups.forEach((popup) => popup.remove());
     }
 
-    let awaiting_target = false;
-    
-    function trackElement(selectedElement, followingElement) {
+    let isTrackingEnabled = false;
+
+    function doTarget(selectedElement, followingElement) {
         console.log('Selected Element:', selectedElement);
         // Disable tracking after the element is selected
         isTrackingEnabled = false;
+        
+        console.log(selectedElement.id)
+        console.log(selectedHand)
+        
+        let data = {
+            "type": "hand",
+            "card": selectedCard,
+            "target": selectedElement.id,
+            "card_index": selectedHand,
+            "turn": turn
+        }
+        sendAction(data);
+
+        selectedHand = null;
+        selectedCard = null;
         followingElement.remove()
+        document.removeEventListener('mousemove', updateFollowingElementPosition);
     }
 
     function startFollowing() {
+
+
         isTrackingEnabled = true;
-        
-        // Create the following element
         const followingElement = document.createElement('div');
         followingElement.setAttribute('id', 'followingElement');
-
+        followingElement.style.position = 'absolute';
+        followingElement.style.left = "50px";
+        followingElement.style.top = "50px";
         // Add the following element to the document
         document.body.appendChild(followingElement);
+
 
         // Add event listener to update the position of the following element on mousemove
         document.addEventListener('mousemove', updateFollowingElementPosition);
 
-        document.body.addEventListener('click', function (event) {
-            if (isTrackingEnabled && event.target.classList.contains('pkcard')) {
-                trackElement(event.target, followingElement);
-            }
-        });
+
     }
+
+
+    document.body.addEventListener('click', function (event) {
+        // Create the following element
+        
+        if (isTrackingEnabled && event.target.classList.contains('pkcard')) {
+            console.log(event.target, followingElement)
+            doTarget(event.target, followingElement);
+        }
+    });
+
+
+
 
     function updateFollowingElementPosition(event) {
         const followingElement = document.getElementById('followingElement');
@@ -281,9 +312,16 @@
         document.body.appendChild(examinationContainer);
     }
 
+
+
+
     function playAction(data) {
         location.reload()
     }
+
+
+
+
 
     function sendAction(data) {
         console.log(data);
@@ -314,12 +352,21 @@
             });
     };
 
+
+
+
     function tryGetTarget() {
         startFollowing();
     }
 
+
+
+
+
+
+
     function tryPlayCard(card, card_index) {
-        if (card["supertype"]) {
+        if (card["supertype"] == "Pokemon") {
             if (card["subtypes"] != "Basic") {
                 // console.log("PLAYING NOT BASIC");
                 console.log(card);
@@ -328,6 +375,11 @@
             } else {
                 playCard(card, card_index)
             }
+        }else if(card["supertype"] == "Energy"){
+            selectedHand = card_index;
+            selectedCard = card;
+            target = tryGetTarget();
+
         }
 
     }
@@ -421,12 +473,30 @@
 
     };
 
+
+    function createEnergies(card, ele){
+        const eneryBoard = document.createElement('div');
+            // cardElement.textContent = cardDB[card].name;
+        eneryBoard.classList.add('energy-bar');
+        
+        for (i in card["energies"]){
+            let energy = document.createElement('div')
+            energy.classList.add('energy');
+            energy.classList.add(card["energies"][i]);
+            eneryBoard.appendChild(energy)
+            
+        }
+        ele.appendChild(eneryBoard)
+    };
+
+
     function populate_field(who, field) {
 
         if (field["active"] && "card" in field["active"]) {
             let cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
+            cardElement.id = "active" + "-" + who;
 
             cardElement.style.backgroundImage = `url(${cardDB[field["active"]["card"]].img})`;
             cardElement.addEventListener('click', () => {
@@ -435,6 +505,7 @@
 
                 // showOptions(card, card_index);
             });
+            createEnergies(field["active"], cardElement)
             document.getElementById(who + "-active").appendChild(cardElement);
         }
         for (i in field["bench"]) {
@@ -443,6 +514,7 @@
             const cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
+            cardElement.id = "bench" + "-" + who + "-" + i;
 
             cardElement.style.backgroundImage = `url(${card.img})`;
             cardElement.addEventListener('click', () => {
@@ -451,6 +523,7 @@
 
                 // showOptions(card, card_index);
             });
+            createEnergies(card, cardElement)
             document.getElementById(who + "-bench").appendChild(cardElement);
         }
         let cardElement = document.createElement('div');

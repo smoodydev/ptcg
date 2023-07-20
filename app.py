@@ -332,7 +332,7 @@ def practice_npc(npc):
 
     cards_req = [*set(starter_deck.copy())]
     card_db = make_card(cards_req)
-
+    print(game_state)
     return render_template("match.html", game=json.dumps(game_state), turn =game_state[2], card_db=json.dumps(card_db))
 
 
@@ -341,6 +341,7 @@ def practice_npc(npc):
 def perform_action():
     game_state = session["npc"]
     player = game_state[0]
+    print(player)
     opponent = game_state[1]
     turn = game_state[2]
     a = request.get_json().get("data")
@@ -370,17 +371,47 @@ def perform_action():
                     if target == "active":
                         print(player["active"]["turn"])
 
-                
+            elif a["card"]["supertype"] == "Energy":
+                tar = a["target"].split("-")
+                if tar[0] == "bench":
+                    player[tar[0]][int(tar[2])]["energies"].append(a["card"]["name"].split(" ")[0])
+                else:
+                    player[tar[0]]["energies"].append(a["card"]["name"].split(" ")[0])
+                session["npc"][0] = player
+                player["hand"].pop(index)
+                session["npc"] = session["npc"]
+                # card = player["hand"][index]
+                print("Energy")
+                print(a["target"])
+
+            elif a["card"]["supertype"] == "Trainer":
+                print("Trainer")
+                print(a["target"])
+
             else:
                 print("NAH")
-                response_data= {"v": False, "message": "Could not play this card"}
+                
                 return jsonify(fail_response), 200
             return jsonify(fail_response), 200
             # except Exception:
             #     print("GONE WRONGS")
             #     return "False"
+        
+        
+        elif a["type"] == "attack":
+            print("ATTACK")
+        
+        
+        elif a["type"] == "endTurn":
+            session["npc"][2] = turn + 1
+            session["npc"] = session["npc"]
+            print("END TURN")
+        
+        
+        
+        
         else:
-            print("POO")
+            return 500
 
     print(session["npc"])
     return "Hello"
@@ -393,6 +424,10 @@ def perform_action():
 #     if match:
 #         return match
 #     return redirect(url_for('profile'))
+
+
+
+
 
 
 
