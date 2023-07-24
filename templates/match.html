@@ -483,9 +483,65 @@
 
 
     function startAttack(card) {
-        // Coming soon
+        // Title Modal
+        let titleCard = document.createElement("h1");
+        titleCard.textContent = "Select an Attack";
+        modalContent.appendChild(titleCard);
+
+        let movePool = document.createElement("div");
+        movePool.id = "move-pool"
+        modalContent.append(movePool);
+        
+        // Create and Add Attack for Selection
+        for (let i =0; i < card.attacks.length; i++){
+            console.log(i)
+            console.log(card.attacks[i])
+            let bar = document.createElement("div");
+            bar.classList.add("move-bar")
+            let barName = document.createElement("div");
+            barName.textContent = card.attacks[i]["name"]
+            barName.classList.add("c6");
+
+            let barCost = document.createElement("div");
+            barCost.classList.add("move-cost")
+            barCost.classList.add("c2")
+            
+            for (let j =0; j < card.attacks[i]["cost"].length; j++){
+                let energy = document.createElement('div')
+                energy.classList.add('energy');
+                energy.classList.add(card.attacks[i]["cost"][j]);
+                barCost.appendChild(energy)
+            }
+
+            let barDamage = document.createElement("div");
+            barDamage.classList.add("move-damage")
+            barDamage.textContent = card.attacks[i]["damage"]
+            barDamage.classList.add("c2")
+
+
+            let barSelect = document.createElement("button");
+            barSelect.classList.add("move-select");
+            barSelect.textContent = "Select";
+            barSelect.classList.add("c2");
+
+            bar.appendChild(barName);
+            bar.appendChild(barCost);
+            bar.appendChild(barDamage);
+            bar.appendChild(barSelect);
+
+
+            
+            movePool.appendChild(bar);
+        }
+        
+        
+        
+        
+        openModal();
 
     }
+
+
 
     function examineCard(card, card_index, option_type) {
         // Create a card examination container
@@ -522,7 +578,7 @@
             const attackButton = document.createElement('button');
             attackButton.textContent = 'ATTACK';
             attackButton.addEventListener('click', () => {
-                console.log(card);
+                startAttack(card);
 
                 // Remove the examination container when the card is played
                 examinationContainer.remove();
@@ -713,6 +769,20 @@
         }
 
         if (option_type == "active") {
+
+            const attackButton = document.createElement('button');
+            attackButton.textContent = 'ATTACK';
+            attackButton.addEventListener('click', () => {
+                let card = cardDB[cardId]
+                startAttack(card);
+                // Remove the examination container when the card is played
+                popupContainer.remove();
+            });
+            popupContainer.appendChild(attackButton);
+
+
+
+
             // Create retreatButton
             const retreatButton = document.createElement('button');
             retreatButton.textContent = 'Retreat';
@@ -764,7 +834,7 @@
             const cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
-            console.log(card);
+            
             if (who == "player") {
                 console.log("HO")
                 try {
@@ -810,7 +880,7 @@
 
 
     function populate_field(who, field) {
-
+        //  Draw Active
         if (field["active"] && "card" in field["active"]) {
             let cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
@@ -825,6 +895,7 @@
             createEnergies(field["active"], cardElement);
             document.getElementById(who + "-active").appendChild(cardElement);
         }
+        //  Draw Bench
         for (i in field["bench"]) {
             card = cardDB[field["bench"][i]["card"]];
             const cardElement = document.createElement('div');
@@ -870,14 +941,6 @@
         sendAction(data);
 
     });
-
-
-
-    // Event listener for the button click
-    // button.addEventListener('click', (event) => {
-    //     console.log("HAN")
-    // });
-
 
 
 

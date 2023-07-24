@@ -130,16 +130,61 @@ button[type="submit"]:hover {
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  border: solid black 1px;
 }
 
-.Fighting {
-  background-color: brown;
+
+.move-bar {
+  display: flex;
+}
+
+.move-cost {
+  display: flex;
+}
+
+.move-damage {
+  display: flex;
+}
+
+
+
+
+
+.Grass {
+  background-color: green;
 }
 
 .Fire {
   background-color: red;
 }
 
+.Water {
+  background-color: blue;
+}
+.Electric {
+  background-color: yellow;
+}
+
+.Fighting {
+  background-color: brown;
+}
+
+.Psychic {
+  background-color: purple;
+}
+
+.Steel {
+  background-color: silver;
+}
+
+.Dark {
+  background-color: darkslategrey;
+}
+
+
+.Colorless {
+  background-color: white;
+}
 
 #middle {
   display: flex;
