@@ -212,3 +212,21 @@ def start_game(playerA, playerB):
     tell_game_state(playera, playerb)
     print(playera.get_state())
     return playera.get_state(), playerb.get_state()
+
+
+def match_opening_new():
+    pass
+
+
+
+def draw(player):
+    if len(player["deck"]):
+        player["hand"].append(player["deck"].pop())
+
+
+def shuffle(player):
+    random.shuffle(player["deck"])
+
+
+def start_new_game(playerA, playerB):
+    return []

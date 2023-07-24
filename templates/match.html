@@ -292,7 +292,7 @@
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.name = "select[]";
-            checkbox.value = i;
+            checkbox.value = required.options[i];
 
             label.appendChild(checkbox);
             fieldset.appendChild(label);
@@ -343,17 +343,21 @@
 
         submitButton.addEventListener("click", function () {
             const checkboxes = document.querySelectorAll('input[name="select[]"]:checked');
-            const selectedOptions = Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
+            const selectedOptions = Array.from(checkboxes).map(checkbox => checkbox.value);
             console.log(paramName, selectedOptions);
-            console.log(required)
+            let data = required.origin;
+            data[paramName] = selectedOptions;
+            sendAction(data);
+            closeModal();
         });
 
         modalContent.appendChild(submitButton);
 
+    
 
 
 
-
+        console.log(required);
         console.log(required);
         console.log(steps)
         openModal();
@@ -374,7 +378,9 @@
 
     // Function to close the modal
     function closeModal() {
+        modalContent.innerHTML = "";
         modal.style.display = 'none';
+
     }
 
     // Close the modal if the user clicks outside of it
@@ -476,7 +482,10 @@
     }
 
 
-
+    function startAttack(card){
+        // Coming soon
+        
+    }
 
     function examineCard(card, card_index, option_type) {
         // Create a card examination container
@@ -507,7 +516,22 @@
         }
 
         if (option_type == "active") {
-            // Create play button
+            // Create Attack button
+            
+            
+            const attackButton = document.createElement('button');
+            attackButton.textContent = 'ATTACK';
+            attackButton.addEventListener('click', () => {
+                console.log(card);
+                
+                // Remove the examination container when the card is played
+                examinationContainer.remove();
+            });
+            examinationContainer.appendChild(attackButton);
+
+
+
+            // Create Retreat button
             const retreatButton = document.createElement('button');
             retreatButton.textContent = 'Retreat';
             retreatButton.addEventListener('click', () => {
@@ -719,6 +743,7 @@
 
 
     function populate_hand(who, cards) {
+        console.log(cards);
         cards.forEach((card, card_index) => {
             let where = who + "-hand";
 
@@ -726,7 +751,18 @@
             const cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
+            console.log(card);
             if (who == "player") {
+                console.log("HO")
+                try {
+                    
+                    console.log(cardDB[card].img)
+
+                } catch {
+                    console.log("b")
+                    console.log(card)
+                    console.log(cardDB)
+                }
                 cardElement.style.backgroundImage = `url(${cardDB[card].img})`;
                 cardElement.addEventListener('click', () => {
                     // Perform actions when the card is clicked

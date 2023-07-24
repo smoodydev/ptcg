@@ -4,7 +4,7 @@ from flask_pymongo import PyMongo, ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from base_set import base_set_cards
-from game import start_game
+from game import start_game, draw, shuffle
 from handle_json import make_card
 
 import json
@@ -175,6 +175,10 @@ starter_deck = [
     97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97
 
 ]
+
+
+
+
 starter_decko = [
     47, 47, 47,        # diglett
     52, 52, 52, 52,     # machop
@@ -322,6 +326,11 @@ def practice_npc(npc):
     """
     Handles Starting a new game.
     """
+    cards_req = list(set(starter_deck.copy() + starter_deck.copy()))
+    print(starter_deck.copy())
+    print(cards_req)
+    print(cards_req)
+    card_db = make_card(cards_req)
     if "npc" not in session:
         print(npc)
         npc_choices = {
@@ -334,17 +343,22 @@ def practice_npc(npc):
         enemy = npc_choices[npc]
         
         player, npc = start_game({"name": "Stephen", "deck": starter_deck.copy()}, enemy)
+
         turn = 0
         energy = False
+
+        shuffle(player)
+        shuffle(npc)
         game_state = [player, npc, turn, energy]
         session["npc"] = game_state
     else:
         game_state = session["npc"]
+        player = game_state[0]
+        npc = game_state[1]
 
-    cards_req = [*set(starter_deck.copy())]
-    card_db = make_card(cards_req)
+
     print(game_state)
-    return render_template("match.html", game=json.dumps(game_state), turn =game_state[2], card_db=json.dumps(card_db))
+    return render_template("match.html", game=json.dumps(game_state), turn = game_state[2], card_db=json.dumps(card_db))
 
 
 @app.route('/match/npc', methods=["POST"])
@@ -417,6 +431,7 @@ def perform_action():
                                     pk_tar["turn"] = turn
                                     
                                     session["npc"] = session["npc"]
+                                    return jsonify(valid_response), 200
 
             #    -----------------   ENERGY ATTACHEMENT   -----------------
             elif data["card"]["supertype"] == "Energy":
@@ -460,12 +475,14 @@ def perform_action():
                     if player["bench"][target_index]:
                         energies = player["active"]["energies"]
                         card_db = make_card([player["active"]["card"]])
+                        active_card = card_db[str(player["active"]["card"])]
                         if "cost" in data:
                             cost = data["cost"]
-                            if len(energies) > len(data["card"]["retreatCost"]):
-                                print("ENOUGH CARDS 1")
-                                if len(cost) == len(data["card"]["retreatCost"]):
-                                    print("ENOUGH CARDS 2")
+
+                            if len(energies) >= len(active_card["retreatCost"]):
+
+                                if len(cost) >= len(active_card["retreatCost"]):
+
                                     try:
                                         for e in cost:
                                             energies.remove(e)
@@ -480,11 +497,12 @@ def perform_action():
                                     
                                     session["npc"] = session["npc"]
                                     return jsonify(valid_response), 200
+                            return jsonify(fail_response), 200
                         else:
                             # print(card_db)
                             # print(player["active"])
                             # print(card_db[str(player["active"]["card"])])
-                            active_card = card_db[str(player["active"]["card"])]
+                            
                             print(active_card)
                             print(active_card)
                             print(active_card)
@@ -499,7 +517,29 @@ def perform_action():
         elif action_type == "endTurn":
             session["npc"][2] = turn + 1
             session["npc"][3] = True
+
+            if turn ==0:
+                print(session["npc"][1])
+                opponent = session["npc"][1]
+                hand = opponent["hand"]
+                card_db = make_card(hand)
+                for index, item in enumerate(hand):
+                    
+                    if card_db[str(item)]["supertype"] =="Pokemon":
+                        if card_db[str(item)]["subtypes"] == "Basic":
+                            opponent["active"] = {"card": opponent["hand"].pop(index), "dmg": 0, "energies":[], "status": None, "turn": turn}
+
+
+
+            temp = session["npc"][0]
+            session["npc"][0] = session["npc"][1]
+            session["npc"][1] = temp
+            print(session["npc"][0])
+            draw(session["npc"][0])
+            print(session["npc"][0])
             session["npc"] = session["npc"]
+
+
 
             print("END TURN")
             return jsonify(valid_response), 200
@@ -579,7 +619,8 @@ def add_cards_to_collection(player_id, card_ids):
     
 
 
-
+def swap_items_with_swap(list, index1, index2):
+    list[index1], list[index2] = swap(list[index1], list[index2])
 
 
 
