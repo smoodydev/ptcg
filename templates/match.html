@@ -725,6 +725,19 @@
             popupContainer.appendChild(retreatButton);
         }
 
+        // if (option_type == "bench") {
+        //     // Create retreatButton
+        //     const retreatButton = document.createElement('button');
+        //     // retreatButton.textContent = 'Retreat';
+        //     // retreatButton.addEventListener('click', () => {
+        //     //     tryRetreatCard(card, card_index);
+        //     //     // Remove the examination container when the card is played
+        //     //     popupContainer.remove();
+        //     // });
+
+        //     popupContainer.appendChild(retreatButton);
+        // }
+
         const backButton = document.createElement('button');
         backButton.textContent = 'Back';
         backButton.addEventListener('click', () => {
@@ -807,8 +820,6 @@
             cardElement.style.backgroundImage = `url(${card.img})`;
             cardElement.addEventListener('click', () => {
                 // Perform actions when the card is clicked
-                // Display options or perform any desired functionality
-                console.log("HO")
                 showOptions(field["active"]["card"], null, "active");
             });
             createEnergies(field["active"], cardElement)
@@ -816,7 +827,6 @@
         }
         for (i in field["bench"]) {
             card = cardDB[field["bench"][i]["card"]];
-            console.log(card);
             const cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
@@ -824,10 +834,7 @@
 
             cardElement.style.backgroundImage = `url(${card.img})`;
             cardElement.addEventListener('click', () => {
-                // Perform actions when the card is clicked
-                // Display options or perform any desired functionality
-
-                // showOptions(card, card_index, bench);
+                showOptions(field["bench"][i]["card"], null, "bench");
             });
             createEnergies(card, cardElement)
             document.getElementById(who + "-bench").appendChild(cardElement);

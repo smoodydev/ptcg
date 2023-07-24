@@ -165,7 +165,7 @@ water_deck = [2, 42, 42, 63, 63, 63, 63, 38, 38, 59, 59, 59, 102, 102, 102, 102,
 start_trainers = [81, 91, 92, 92, 94, 95]
 
 
-starter_deck = [
+evo_test = [
          
     52, 52, 52, 52, 52, 52, 52, 52,     # machop
     34, 34, 34, 34, 34, 34, 34, 34,            #Machoke
@@ -179,7 +179,7 @@ starter_deck = [
 
 
 
-starter_decko = [
+starter_deck = [
     47, 47, 47,        # diglett
     52, 52, 52, 52,     # machop
     34, 34,             #Machoke
