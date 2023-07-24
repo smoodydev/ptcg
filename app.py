@@ -468,7 +468,7 @@ def perform_action():
 
         elif action_type == "retreat":
             tar = data["target"].split("-")
-            print(tar)
+
             target_index = int(tar[2])
             if tar[1] == "player":
                 if tar[0] == "bench":
@@ -476,13 +476,12 @@ def perform_action():
                         energies = player["active"]["energies"]
                         card_db = make_card([player["active"]["card"]])
                         active_card = card_db[str(player["active"]["card"])]
-                        if "cost" in data:
-                            cost = data["cost"]
+                        if "cost" in data or "retreatCost" not in active_card:
+                            cost = data.get("cost", [])
 
-                            if len(energies) >= len(active_card["retreatCost"]):
+                            if len(energies) >= len(active_card.get("retreatCost", [])):
 
-                                if len(cost) >= len(active_card["retreatCost"]):
-
+                                if len(cost) >= len(active_card.get("retreatCost", [])):
                                     try:
                                         for e in cost:
                                             energies.remove(e)
