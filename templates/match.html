@@ -822,7 +822,7 @@
                 // Perform actions when the card is clicked
                 showOptions(field["active"]["card"], null, "active");
             });
-            createEnergies(field["active"], cardElement)
+            createEnergies(field["active"], cardElement);
             document.getElementById(who + "-active").appendChild(cardElement);
         }
         for (i in field["bench"]) {
@@ -836,7 +836,7 @@
             cardElement.addEventListener('click', () => {
                 showOptions(field["bench"][i]["card"], null, "bench");
             });
-            createEnergies(card, cardElement)
+            createEnergies(field["bench"][i], cardElement);
             document.getElementById(who + "-bench").appendChild(cardElement);
         }
         let cardElement = document.createElement('div');
