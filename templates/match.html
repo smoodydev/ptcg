@@ -339,7 +339,7 @@
 
         let submitButton = document.createElement("button");
         submitButton.textContent = "Continue";
-        
+
 
         submitButton.addEventListener("click", function () {
             const checkboxes = document.querySelectorAll('input[name="select[]"]:checked');
@@ -353,7 +353,7 @@
 
         modalContent.appendChild(submitButton);
 
-    
+
 
 
 
@@ -482,9 +482,9 @@
     }
 
 
-    function startAttack(card){
+    function startAttack(card) {
         // Coming soon
-        
+
     }
 
     function examineCard(card, card_index, option_type) {
@@ -517,13 +517,13 @@
 
         if (option_type == "active") {
             // Create Attack button
-            
-            
+
+
             const attackButton = document.createElement('button');
             attackButton.textContent = 'ATTACK';
             attackButton.addEventListener('click', () => {
                 console.log(card);
-                
+
                 // Remove the examination container when the card is played
                 examinationContainer.remove();
             });
@@ -768,7 +768,7 @@
             if (who == "player") {
                 console.log("HO")
                 try {
-                    
+
                     console.log(cardDB[card].img)
 
                 } catch {
@@ -839,12 +839,24 @@
             createEnergies(field["bench"][i], cardElement);
             document.getElementById(who + "-bench").appendChild(cardElement);
         }
-        let cardElement = document.createElement('div');
+
+        // DECK
+        let deckElement = document.createElement('div');
         // cardElement.textContent = cardDB[card].name;
-        cardElement.classList.add('pkcard');
-        cardElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
-        cardElement.textContent = field.deck.length
-        document.getElementById(who + "-deck").appendChild(cardElement);
+        deckElement.classList.add('pkcard');
+        deckElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
+        deckElement.textContent = field.deck.length
+        document.getElementById(who + "-deck").appendChild(deckElement);
+
+        // DISCARD PILE
+        if (field.discard.length) {
+            let discardElement = document.createElement('div');
+            // cardElement.textContent = cardDB[card].name;
+            discardElement.classList.add('pkcard');
+            discardElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
+            discardElement.textContent = field.discard.length
+            document.getElementById(who + "-discard").appendChild(discardElement);
+        }
 
     }
 
