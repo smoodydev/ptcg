@@ -166,6 +166,16 @@ start_trainers = [81, 91, 92, 92, 94, 95]
 
 
 starter_deck = [
+         
+    52, 52, 52, 52, 52, 52, 52, 52,     # machop
+    34, 34, 34, 34, 34, 34, 34, 34,            #Machoke
+
+    46, 46, 46, 46, # Charmander
+    24, 24, 24, 24,  # Charmeleon
+    97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97
+
+]
+starter_decko = [
     47, 47, 47,        # diglett
     52, 52, 52, 52,     # machop
     34, 34,             #Machoke
@@ -325,7 +335,8 @@ def practice_npc(npc):
         
         player, npc = start_game({"name": "Stephen", "deck": starter_deck.copy()}, enemy)
         turn = 0
-        game_state = [player, npc, turn]
+        energy = False
+        game_state = [player, npc, turn, energy]
         session["npc"] = game_state
     else:
         game_state = session["npc"]
@@ -339,22 +350,33 @@ def practice_npc(npc):
 @app.route('/match/npc', methods=["POST"])
 @login_required
 def perform_action():
-    game_state = session["npc"]
-    player = game_state[0]
-    print(player)
-    opponent = game_state[1]
-    turn = game_state[2]
-    a = request.get_json().get("data")
+    game_state = session.get("npc")
+    if not game_state or not isinstance(game_state, list) or len(game_state) < 3:
+        return jsonify({"v": False, "message": "Invalid game state"}), 400
 
-    fail_response= {"v": False, "message": "Could not play this card"}
-    valid_response= {"v": True, "message": "Card Played"}
+    player, opponent, turn, energy = game_state
 
-    if a["turn"] == game_state[2]:
-        if a["type"] == "hand":
-            index = a["card_index"]
-            
-            if a["card"]["supertype"] == "Pokemon":
-                if a["card"]["subtypes"] == "Basic":
+    data = request.get_json().get("data")
+
+    fail_response = {"v": False, "message": "Could not play this card"}
+    valid_response = {"v": 1, "message": "Card Played"}
+    requires_energies = {"v": 2, "message": "Requires Energies"}
+    aavalid_response = {"v": 3, "message": "Card Played"}
+    aavalid_response = {"v": 4, "message": "Card Played"}
+    aavalid_response = {"v": 5, "message": "Card Played"}
+    
+
+    if data["turn"] == game_state[2]:
+        action_type = data["type"]
+    
+        # --------------------------------------------------------------
+        # ---   HAND ACTION - Set Pokemon, Evolve, Trainer, Energy   ---
+        # --------------------------------------------------------------
+        if action_type == "hand":
+            index = data["card_index"]        
+            #    -----------------   Playing Pokemon Cards   -----------------
+            if data["card"]["supertype"] == "Pokemon":
+                if data["card"]["subtypes"] == "Basic":
                     if turn == 0 and player["active"] == None:
                         player["active"] = {"card": player["hand"].pop(index), "dmg": 0, "energies":[], "status": None, "turn": turn}
                     elif len(player["bench"]) < 5:
@@ -366,46 +388,121 @@ def perform_action():
                     
                     return jsonify(valid_response), 200
 
-                elif a["card"]["subtypes"] != "Basic":
-                    target = a["target"]
-                    if target == "active":
-                        print(player["active"]["turn"])
+                elif data["card"]["subtypes"] != "Basic":
+                    target = data["target"].split("-")
+                    if target[1] == "player":
+                        evo_form = data["card"]['evolvesFrom']
+                        if target[0] == "active":
+                            if turn != player["active"]["turn"]:
+                                p_card = player["active"]["card"]
+                                card_db = make_card([p_card])
 
-            elif a["card"]["supertype"] == "Energy":
-                tar = a["target"].split("-")
-                if tar[0] == "bench":
-                    player[tar[0]][int(tar[2])]["energies"].append(a["card"]["name"].split(" ")[0])
-                else:
-                    player[tar[0]]["energies"].append(a["card"]["name"].split(" ")[0])
-                session["npc"][0] = player
-                player["hand"].pop(index)
-                session["npc"] = session["npc"]
-                # card = player["hand"][index]
-                print("Energy")
-                print(a["target"])
+                                if card_db[str(p_card)]["name"] == evo_form:
+                                    player["active"]["card"] = player["hand"].pop(index)
+                                    player["active"]["turn"] = turn
+                                    
+                                    session["npc"] = session["npc"]
+                                    return jsonify(valid_response), 200
+                                return jsonify(fail_response), 200
+                        elif target[0] == "bench":
 
-            elif a["card"]["supertype"] == "Trainer":
+                            pk_tar = player["bench"][int(target[2])]
+                            if turn != pk_tar["turn"]:
+
+                                p_card = pk_tar["card"]
+                                card_db = make_card([p_card])
+                                
+                                if card_db[str(p_card)]["name"] == evo_form:
+                                    pk_tar["card"] = player["hand"].pop(index)
+                                    pk_tar["turn"] = turn
+                                    
+                                    session["npc"] = session["npc"]
+
+            #    -----------------   ENERGY ATTACHEMENT   -----------------
+            elif data["card"]["supertype"] == "Energy":
+                if energy:
+                    tar = data["target"].split("-")
+                    if tar[1] == "player":
+                        if tar[0] == "bench":
+                            player[tar[0]][int(tar[2])]["energies"].append(data["card"]["name"].split(" ")[0])
+                        else:
+                            player[tar[0]]["energies"].append(data["card"]["name"].split(" ")[0])
+                        
+                        player["hand"].pop(index)
+                        session["npc"][0] = player
+                        session["npc"][3] = False
+                        session["npc"] = session["npc"]
+                        return jsonify(valid_response), 200
+
+            elif data["card"]["supertype"] == "Trainer":
                 print("Trainer")
-                print(a["target"])
+                print(data["target"])
+                print("Not Implemented Yet")
+                return jsonify(fail_response), 200
 
             else:
-                print("NAH")
-                
+                print("NOTHING HERE")
                 return jsonify(fail_response), 200
+            
             return jsonify(fail_response), 200
-            # except Exception:
-            #     print("GONE WRONGS")
-            #     return "False"
+
+
         
-        
-        elif a["type"] == "attack":
+        elif action_type == "attack":
             print("ATTACK")
+
+        elif action_type == "retreat":
+            tar = data["target"].split("-")
+            print(tar)
+            target_index = int(tar[2])
+            if tar[1] == "player":
+                if tar[0] == "bench":
+                    if player["bench"][target_index]:
+                        energies = player["active"]["energies"]
+                        card_db = make_card([player["active"]["card"]])
+                        if "cost" in data:
+                            cost = data["cost"]
+                            if len(energies) > len(data["card"]["retreatCost"]):
+                                print("ENOUGH CARDS 1")
+                                if len(cost) == len(data["card"]["retreatCost"]):
+                                    print("ENOUGH CARDS 2")
+                                    try:
+                                        for e in cost:
+                                            energies.remove(e)
+                                    except:
+                                        return jsonify(fail_response), 200
+                                    
+                                    player["active"]["energies"] = energies
+                                    temp = player["active"]
+                                    player["active"] = player["bench"][target_index]
+                                    player["bench"][target_index] = temp
+                                    session["npc"][0] = player
+                                    
+                                    session["npc"] = session["npc"]
+                                    return jsonify(valid_response), 200
+                        else:
+                            # print(card_db)
+                            # print(player["active"])
+                            # print(card_db[str(player["active"]["card"])])
+                            active_card = card_db[str(player["active"]["card"])]
+                            print(active_card)
+                            print(active_card)
+                            print(active_card)
+                            return_response = requires_energies
+                            return_response["energies"] = active_card["retreatCost"]
+                            return_response["origin"] = data
+                            return_response["options"] = player["active"]["energies"]
+                            print(requires_energies)
+                            return jsonify(requires_energies), 200
         
         
-        elif a["type"] == "endTurn":
+        elif action_type == "endTurn":
             session["npc"][2] = turn + 1
+            session["npc"][3] = True
             session["npc"] = session["npc"]
+
             print("END TURN")
+            return jsonify(valid_response), 200
         
         
         

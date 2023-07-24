@@ -92,6 +92,51 @@
             pointer-events: none;
             /* Ensure the following element doesn't interfere with mouse events */
         }
+
+
+        /* MODAL START */
+
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Black with transparency */
+        }
+
+        /* Style the modal content */
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        /* Style the close button */
+        .close {
+            color: #aaaaaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+
+        /* MODAL END */
     </style>
 </head>
 
@@ -189,6 +234,16 @@
 
     </div>
 
+
+    <div id="myModal" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="myModalContent"></div>
+
+        </div>
+    </div>
+
 </body>
 <script>
     let game_state = JSON.parse({{ game | tojson }});
@@ -199,8 +254,14 @@
     let opponent_hand = opponent["hand"];
     let turn = {{ turn }};
 
+    let askForTarget;
     let selectedHand;
     let selectedCard;
+    let actionTarget;
+    let actionType;
+
+    const modal = document.getElementById('myModal');
+    const modalContent = document.getElementById('myModalContent');
 
     function clearPopUps() {
         const existingPopups = document.querySelectorAll('.popup-container, .examination-container');
@@ -209,25 +270,169 @@
 
     let isTrackingEnabled = false;
 
+
+
+
+
+    function doRequestsStep(required, steps, paramName) {
+
+        let titleCard = document.createElement("h1");
+        titleCard.textContent = required["message"];
+        modalContent.appendChild(titleCard);
+
+        const fieldset = document.createElement("fieldset");
+        fieldset.id = "select";
+
+        for (let i = 0; i < required.options.length; i++) {
+
+
+            const label = document.createElement("label");
+            label.textContent = required.options[i];
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.name = "select[]";
+            checkbox.value = i;
+
+            label.appendChild(checkbox);
+            fieldset.appendChild(label);
+            fieldset.appendChild(document.createElement("br"));
+
+
+            // 
+
+            // const label = document.createElement("label");
+            // label.textContent = required.options[i];
+            // selectObject.appendChild(label)
+
+            // const option = document.createElement("option");
+            // option.value = i;
+            // option.text = required.options[i];
+            // selectObject.appendChild(option);
+
+            console.log(required.options[i]);
+
+
+            // const checkbox = document.createElement("input");
+            // checkbox.type = "checkbox";
+            // checkbox.name = "fruits[]";
+            // checkbox.value = i;
+
+
+
+            // array.forEach(item => {
+            // const label = document.createElement("label");
+            // label.textContent = item;
+
+            // const checkbox = document.createElement("input");
+            // checkbox.type = "checkbox";
+            // checkbox.name = "fruits[]";
+            // checkbox.value = item;
+
+            label.appendChild(checkbox);
+            // fieldset.appendChild(label);
+            // fieldset.appendChild(document.createElement("br"));
+            // });
+        }
+
+        modalContent.appendChild(fieldset);
+
+        let submitButton = document.createElement("button");
+        submitButton.textContent = "Continue";
+        
+
+        submitButton.addEventListener("click", function () {
+            const checkboxes = document.querySelectorAll('input[name="select[]"]:checked');
+            const selectedOptions = Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
+            console.log(paramName, selectedOptions);
+            console.log(required)
+        });
+
+        modalContent.appendChild(submitButton);
+
+
+
+
+
+        console.log(required);
+        console.log(steps)
+        openModal();
+        // Customize the popup window's features (size, position, etc.)
+        console.log(document.getElementById("myModalContent"));
+    }
+
+
+
+
+    // Get the modal element
+
+
+    // Function to open the modal
+    function openModal() {
+        modal.style.display = 'block';
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    // Close the modal if the user clicks outside of it
+    window.onclick = function (event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     function doTarget(selectedElement, followingElement) {
         console.log('Selected Element:', selectedElement);
         // Disable tracking after the element is selected
         isTrackingEnabled = false;
-        
-        console.log(selectedElement.id)
-        console.log(selectedHand)
-        
-        let data = {
-            "type": "hand",
-            "card": selectedCard,
-            "target": selectedElement.id,
-            "card_index": selectedHand,
-            "turn": turn
+
+
+        let data;
+        if (actionType) {
+            data = {
+                "type": actionType,
+                "card": selectedCard,
+                "target": selectedElement.id,
+                "turn": turn
+            }
+        } else {
+
+
+            data = {
+                "type": "hand",
+                "card": selectedCard,
+                "target": selectedElement.id,
+                "card_index": selectedHand,
+                "turn": turn
+            }
         }
         sendAction(data);
 
         selectedHand = null;
         selectedCard = null;
+
+        actionTarget = null;
+        actionType = null;
         followingElement.remove()
         document.removeEventListener('mousemove', updateFollowingElementPosition);
     }
@@ -254,7 +459,7 @@
 
     document.body.addEventListener('click', function (event) {
         // Create the following element
-        
+
         if (isTrackingEnabled && event.target.classList.contains('pkcard')) {
             console.log(event.target, followingElement)
             doTarget(event.target, followingElement);
@@ -273,8 +478,9 @@
 
 
 
-    function examineCard(card, card_index) {
+    function examineCard(card, card_index, option_type) {
         // Create a card examination container
+        console.log(option_type)
         const examinationContainer = document.createElement('div');
         examinationContainer.classList.add('examination-container');
 
@@ -285,14 +491,48 @@
         const cardImageElement = document.createElement('img');
         cardImageElement.src = card.img;
 
-        // Create play button
-        const playButton = document.createElement('button');
-        playButton.textContent = 'Play';
-        playButton.addEventListener('click', () => {
-            tryPlayCard(card, card_index);
-            // Remove the examination container when the card is played
-            examinationContainer.remove();
-        });
+        examinationContainer.appendChild(cardNameElement);
+        examinationContainer.appendChild(cardImageElement);
+
+        if (option_type == "hand") {
+            // Create play button
+            const playButton = document.createElement('button');
+            playButton.textContent = 'Play';
+            playButton.addEventListener('click', () => {
+                tryPlayCard(card, card_index);
+                // Remove the examination container when the card is played
+                examinationContainer.remove();
+            });
+            examinationContainer.appendChild(playButton);
+        }
+
+        if (option_type == "active") {
+            // Create play button
+            const retreatButton = document.createElement('button');
+            retreatButton.textContent = 'Retreat';
+            retreatButton.addEventListener('click', () => {
+                tryRetreatCard(card, card_index);
+                // Remove the examination container when the card is played
+                examinationContainer.remove();
+            });
+            examinationContainer.appendChild(retreatButton);
+        }
+
+        if (option_type == "Bench") {
+            // Create play button
+            const playButton = document.createElement('button');
+            playButton.textContent = 'Bench';
+            playButton.addEventListener('click', () => {
+                tryRetreatCard(card, card_index);
+                // Remove the examination container when the card is played
+                examinationContainer.remove();
+            });
+            examinationContainer.appendChild(playButton);
+        }
+
+
+
+
 
         // Create close button
         const closeButton = document.createElement('button');
@@ -303,9 +543,8 @@
         });
 
         // Append card information elements, play button, and close button to the examination container
-        examinationContainer.appendChild(cardNameElement);
-        examinationContainer.appendChild(cardImageElement);
-        examinationContainer.appendChild(playButton);
+
+
         examinationContainer.appendChild(closeButton);
 
         // Append the examination container to the document body
@@ -342,8 +581,11 @@
                 return response.json();
             })
             .then((responseData) => {
-                if (responseData.v) {
+                if (responseData.v === 1) {
                     playAction()
+                } else if (responseData.v === 2) {
+
+                    doRequestsStep(responseData, [], "cost");
                 }
                 console.log(responseData.message);
             })
@@ -370,18 +612,27 @@
             if (card["subtypes"] != "Basic") {
                 // console.log("PLAYING NOT BASIC");
                 console.log(card);
+                selectedHand = card_index;
+                selectedCard = card;
                 target = tryGetTarget();
                 console.log("PLAYING NOT BASIC");
             } else {
                 playCard(card, card_index)
             }
-        }else if(card["supertype"] == "Energy"){
+        } else if (card["supertype"] == "Energy") {
             selectedHand = card_index;
             selectedCard = card;
             target = tryGetTarget();
 
         }
 
+    }
+
+
+    function tryRetreatCard(card) {
+        console.log("retreat")
+        actionType = "retreat";
+        tryGetTarget();
     }
 
 
@@ -404,8 +655,10 @@
 
 
 
-    function showOptions(cardId, card_index) {
+    function showOptions(cardId, card_index, option_type) {
         clearPopUps();
+        console.log(cardId);
+        console.log(cardId);
 
         // Create a pop-up container
         const popupContainer = document.createElement('div');
@@ -418,18 +671,35 @@
             // Implement your logic for the Read option
             const card = cardDB[cardId]; // Assuming a function findCardById(cardId) retrieves card details
             console.log(card);
-            examineCard(card, card_index);
+            examineCard(card, card_index, option_type);
             popupContainer.remove();
         });
 
-        const playButton = document.createElement('button');
-        playButton.textContent = 'Play';
-        playButton.addEventListener('click', () => {
-            console.log('Play option selected');
-            tryPlayCard(cardDB[cardId], card_index);
-            popupContainer.remove();
-            // Implement your logic for the Play option
-        });
+        if (option_type == "hand") {
+            const playButton = document.createElement('button');
+            playButton.textContent = 'Play';
+            playButton.addEventListener('click', () => {
+                console.log('Play option selected');
+                tryPlayCard(cardDB[cardId], card_index);
+                popupContainer.remove();
+                // Implement your logic for the Play option
+
+            });
+            popupContainer.appendChild(playButton);
+        }
+
+        if (option_type == "active") {
+            // Create retreatButton
+            const retreatButton = document.createElement('button');
+            retreatButton.textContent = 'Retreat';
+            retreatButton.addEventListener('click', () => {
+                tryRetreatCard(card, card_index);
+                // Remove the examination container when the card is played
+                popupContainer.remove();
+            });
+
+            popupContainer.appendChild(retreatButton);
+        }
 
         const backButton = document.createElement('button');
         backButton.textContent = 'Back';
@@ -440,7 +710,7 @@
 
         // Append option buttons to the pop-up container
         popupContainer.appendChild(readButton);
-        popupContainer.appendChild(playButton);
+
         popupContainer.appendChild(backButton);
 
         // Append the pop-up container to the document body
@@ -462,7 +732,7 @@
                     // Perform actions when the card is clicked
                     // Display options or perform any desired functionality
 
-                    showOptions(card, card_index);
+                    showOptions(card, card_index, "hand");
                 });
             } else {
                 cardElement.style.backgroundImage = `url({{ url_for('static', filename='img/back_english.jpg') }})`;
@@ -474,17 +744,17 @@
     };
 
 
-    function createEnergies(card, ele){
+    function createEnergies(card, ele) {
         const eneryBoard = document.createElement('div');
-            // cardElement.textContent = cardDB[card].name;
+        // cardElement.textContent = cardDB[card].name;
         eneryBoard.classList.add('energy-bar');
-        
-        for (i in card["energies"]){
+
+        for (i in card["energies"]) {
             let energy = document.createElement('div')
             energy.classList.add('energy');
             energy.classList.add(card["energies"][i]);
             eneryBoard.appendChild(energy)
-            
+
         }
         ele.appendChild(eneryBoard)
     };
@@ -497,13 +767,13 @@
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
             cardElement.id = "active" + "-" + who;
-
-            cardElement.style.backgroundImage = `url(${cardDB[field["active"]["card"]].img})`;
+            card = cardDB[field["active"]["card"]]
+            cardElement.style.backgroundImage = `url(${card.img})`;
             cardElement.addEventListener('click', () => {
                 // Perform actions when the card is clicked
                 // Display options or perform any desired functionality
-
-                // showOptions(card, card_index);
+                console.log("HO")
+                showOptions(field["active"]["card"], null, "active");
             });
             createEnergies(field["active"], cardElement)
             document.getElementById(who + "-active").appendChild(cardElement);
@@ -521,7 +791,7 @@
                 // Perform actions when the card is clicked
                 // Display options or perform any desired functionality
 
-                // showOptions(card, card_index);
+                // showOptions(card, card_index, bench);
             });
             createEnergies(card, cardElement)
             document.getElementById(who + "-bench").appendChild(cardElement);

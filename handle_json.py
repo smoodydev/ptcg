@@ -6,9 +6,9 @@ pokemon_fields = ["hp", "evolvesFrom", "abilities", "attacks", "weaknesses", "re
 
 def make_cards():
     all_cards = {}
-    print(cards[0]["data"].keys())
-    print(cards[0]["data"])
-    print(" ")
+    # print(cards[0]["data"].keys())
+    # print(cards[0]["data"])
+    # print(" ")
     for c in cards:
         i = c["data"]
         
