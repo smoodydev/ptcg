@@ -133,8 +133,6 @@ def opening_draw(player):
 
 
 def open_loop(player, deck):
-    print(player, deck)
-    print(player.name)
     player.deck.cards.extend(player.hand)
     player.hand = []
     opening_draw(player)
@@ -150,14 +148,11 @@ def match_opening(player1, player2):
     while not player2.has_basic():
         open_loop(player2, player2.deck)
 
-    print(player1.hand_detail())
+    # player1.tell_deck()
+    # player1.tell_hand()
 
-    player1.tell_deck()
-    player1.tell_hand()
-
-    print(player2.hand_detail())
-    player2.tell_deck()
-    player2.tell_hand()
+    # player2.tell_deck()
+    # player2.tell_hand()
 
 
 
@@ -209,8 +204,8 @@ def start_game(playerA, playerB):
     match_opening(playera, playerb)
     # player_select_active(player1)
     # player_select_active(player2)
-    tell_game_state(playera, playerb)
-    print(playera.get_state())
+    # tell_game_state(playera, playerb)
+    # print(playera.get_state())
     return playera.get_state(), playerb.get_state()
 
 

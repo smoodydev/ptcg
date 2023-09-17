@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from base_set import base_set_cards
 from game import start_game, draw, shuffle
 from handle_json import make_card
+from action_base_set import GameState
 
 import json
 import functools
@@ -92,7 +93,7 @@ def login():
             # Verify password
             if check_password_hash(player['password'], password):
                 # Password matches, login successful
-                # You can store player details in the session here if needed
+                # You can store player details in the session if needed
                 session["player_name"] = player_name
                 return redirect(url_for('profile'))
         
@@ -194,6 +195,26 @@ starter_deck = [
     98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, #fire
     81, 91, 92, 93, 94, 95 # trainers 
 ]
+
+starter_deck2 = [
+    2, #Blastoise
+    42, 42, #wart
+    63, 63, 63, 63, #squritle
+
+    38, 38, # poliwril 
+    59, 59, 59,       # poliwag
+    
+    60, 60, 60, 60, # ponyta
+    46, 46, 46, 46, # Charmander
+    24, 24,  # Charmeleon
+    28, #growlithe
+    
+    26, # Dratini
+    102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, #fighting
+    98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, #fire
+    81, 91, 92, 93, 94, 95 # trainers 
+]
+
 """
 3×	Diglett	Fighting	Common
 4×	Machop	Fighting	Common
@@ -295,13 +316,97 @@ def get_deck():
 
 
 
+# HERE
+
+@app.route('/play/find', methods=["GET", "POST"])
+@login_required
+def play_find():
+    player_name = session["player_name"]
+    if request.method == "POST":
+        data = request.form
+        if data.get("rType", "") == "accept":
+            
+            invite_id = data.get("opponentName")
+            
+            game = mongo.db.match_invite.find_one({"_id": ObjectId(invite_id)})
+            if game:
+                # FIX:  Will TESTING PURPOSES ONLY CURRENTLY
+                invited = mongo.db.players.find_one({"player_name": player_name})
+                inviter = mongo.db.players.find_one({"player_name": game["inviter"]})
+
+
+                flip = random.randint(0, 1)
+
+
+                enemy = {"name": "Bad Player", "deck": starter_deck.copy()}
+                if flip:
+                    print("Heads - Inviter Goes First")
+                    opponent, player = start_game(enemy, {"name": player_name, "deck": starter_deck.copy()})
+                    
+                    game_state = [opponent, player, 0]
+
+                    match_data = {
+                        "player_one": game["inviter"],
+                        "player_two": player_name,
+                        "game_state": game_state
+                    }
+                else:
+                    print("Tails - Invited Goes First")
+                    player, opponent = start_game({"name": player_name, "deck": starter_deck.copy()}, enemy)
+                    
+                    game_state = [player, opponent, 0]
+
+                    match_data = {
+                        "player_one": player_name,
+                        "player_two": game["inviter"],
+                        "game_state": game_state
+                    }
+
+                # print(match_data)
+
+                # a, b = mongo.db.match.insert_one(match_id=match_data)
+                # print(a, b)
+                # return redirect(url_for("play_match", b))
+
+                cards_req = list(set(starter_deck.copy() + starter_deck.copy()))
+
+                card_db = make_card(cards_req)
+                player_game_state = get_player_state(game_state, player_name)
+                return render_template("match.html", game=json.dumps(player_game_state), turn = game_state[2], card_db=json.dumps(card_db))
+            else:
+                print(list(mongo.db.match_invite.find()))
+        elif data.get("rType", "") == "invite":
+            opponent_name = data.get("opponentName")
+            if opponent_name:
+                match_data = {"inviter": player_name, "invited": opponent_name}
+                print(match_data)
+                mongo.db.match_invite.insert_one({"inviter": player_name, "invited": opponent_name})
+
+    match_invites = mongo.db.match_invite.find({"inviter": player_name})
+    match_invited = mongo.db.match_invite.find({"invited": player_name})
+    return render_template("find_match.html", match_invites=match_invites, match_invited=list(match_invited))
+
+
+
+
+
+
+
 @app.route('/play/<match_id>', methods=["GET", "POST"])
 @login_required
 def play_match(match_id):
     match = mongo.db.match.find_one(match_id=match_id)
     if match:
-        return match
+        if match["player1"] == session["player_name"]:
+            return match
     return redirect(url_for('profile'))
+
+
+
+
+
+
+
 
 
 
@@ -349,7 +454,7 @@ def practice_npc(npc):
 
         shuffle(player)
         shuffle(npc)
-        game_state = [player, npc, turn, energy]
+        game_state = [player, npc, turn, energy, 1]
         session["npc"] = game_state
     else:
         game_state = session["npc"]
@@ -365,10 +470,15 @@ def practice_npc(npc):
 @login_required
 def perform_action():
     game_state = session.get("npc")
+    
     if not game_state or not isinstance(game_state, list) or len(game_state) < 3:
         return jsonify({"v": False, "message": "Invalid game state"}), 400
 
-    player, opponent, turn, energy = game_state
+    player, opponent, turn, energy, player1 = game_state
+
+
+    if turn != 0 and turn % 2 != player1:
+        return jsonify({"v": False, "message": "Invalid game state"}), 400
 
     data = request.get_json().get("data")
 
@@ -380,7 +490,8 @@ def perform_action():
     aavalid_response = {"v": 5, "message": "Card Played"}
     
 
-    if data["turn"] == game_state[2]:
+
+    if data["turn"] == turn:
         action_type = data["type"]
     
         # --------------------------------------------------------------
@@ -456,7 +567,7 @@ def perform_action():
                 return jsonify(fail_response), 200
 
             else:
-                print("NOTHING HERE")
+                print("NOTHING FOUND")
                 return jsonify(fail_response), 200
             
             return jsonify(fail_response), 200
@@ -464,6 +575,17 @@ def perform_action():
 
         
         elif action_type == "attack":
+            g_state = GameState(game_state)
+            print(g_state.tell_game_state())
+            print("data")
+            print(data)
+            try:
+                g_state.handle_attack(data["attackId"])
+                session["npc"] = g_state.tell_game_state()
+            except:
+                print("SOMETHING WRONG")
+            print(g_state.tell_game_state())
+            # print(data)
             print("ATTACK")
 
         elif action_type == "retreat":
@@ -526,8 +648,7 @@ def perform_action():
                     
                     if card_db[str(item)]["supertype"] =="Pokemon":
                         if card_db[str(item)]["subtypes"] == "Basic":
-                            opponent["active"] = {"card": opponent["hand"].pop(index), "dmg": 0, "energies":[], "status": None, "turn": turn}
-
+                            opponent["active"] = {"card": opponent["hand"].pop(index), "dmg": 0, "energies":[], "status": [], "turn": turn}
 
 
             temp = session["npc"][0]
@@ -536,6 +657,8 @@ def perform_action():
             print(session["npc"][0])
             draw(session["npc"][0])
             print(session["npc"][0])
+
+
             session["npc"] = session["npc"]
 
 
@@ -563,6 +686,22 @@ def perform_action():
 
 
 
+# HERE
+def get_player_state(game_state, player_name):
+    print(game_state)
+    print(player_name)
+    if player_name != game_state[0]["name"]:
+        player_temp = game_state[1]
+        game_state[1] =  game_state[0]
+        game_state[0] = player_temp
+
+    player = game_state[0]
+    opponent = game_state[1]
+    player["deck"] = ["card" for card in player["deck"]]
+    opponent["hand"] = ["card" for card in opponent["hand"]]
+    opponent["deck"] = ["card" for card in opponent["deck"]]
+    print(game_state)
+    return game_state
 
 
 
@@ -618,8 +757,7 @@ def add_cards_to_collection(player_id, card_ids):
     
 
 
-def swap_items_with_swap(list, index1, index2):
-    list[index1], list[index2] = swap(list[index1], list[index2])
+
 
 
 

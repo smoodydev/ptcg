@@ -299,40 +299,12 @@
             fieldset.appendChild(document.createElement("br"));
 
 
-            // 
-
-            // const label = document.createElement("label");
-            // label.textContent = required.options[i];
-            // selectObject.appendChild(label)
-
-            // const option = document.createElement("option");
-            // option.value = i;
-            // option.text = required.options[i];
-            // selectObject.appendChild(option);
-
             console.log(required.options[i]);
 
 
-            // const checkbox = document.createElement("input");
-            // checkbox.type = "checkbox";
-            // checkbox.name = "fruits[]";
-            // checkbox.value = i;
-
-
-
-            // array.forEach(item => {
-            // const label = document.createElement("label");
-            // label.textContent = item;
-
-            // const checkbox = document.createElement("input");
-            // checkbox.type = "checkbox";
-            // checkbox.name = "fruits[]";
-            // checkbox.value = item;
 
             label.appendChild(checkbox);
-            // fieldset.appendChild(label);
-            // fieldset.appendChild(document.createElement("br"));
-            // });
+
         }
 
         modalContent.appendChild(fieldset);
@@ -491,9 +463,9 @@
         let movePool = document.createElement("div");
         movePool.id = "move-pool"
         modalContent.append(movePool);
-        
+
         // Create and Add Attack for Selection
-        for (let i =0; i < card.attacks.length; i++){
+        for (let i = 0; i < card.attacks.length; i++) {
             console.log(i)
             console.log(card.attacks[i])
             let bar = document.createElement("div");
@@ -505,8 +477,8 @@
             let barCost = document.createElement("div");
             barCost.classList.add("move-cost")
             barCost.classList.add("c2")
-            
-            for (let j =0; j < card.attacks[i]["cost"].length; j++){
+
+            for (let j = 0; j < card.attacks[i]["cost"].length; j++) {
                 let energy = document.createElement('div')
                 energy.classList.add('energy');
                 energy.classList.add(card.attacks[i]["cost"][j]);
@@ -523,6 +495,17 @@
             barSelect.classList.add("move-select");
             barSelect.textContent = "Select";
             barSelect.classList.add("c2");
+            barSelect.addEventListener('click', () => {
+                let data = {
+                    "type": "attack",
+                    "turn": turn,
+                    "attackId":i
+                }
+                sendAction(data);
+                closeModal();
+                console.log(i);
+            });
+            
 
             bar.appendChild(barName);
             bar.appendChild(barCost);
@@ -530,13 +513,13 @@
             bar.appendChild(barSelect);
 
 
-            
+
             movePool.appendChild(bar);
         }
-        
-        
-        
-        
+
+
+
+
         openModal();
 
     }
@@ -582,6 +565,7 @@
 
                 // Remove the examination container when the card is played
                 examinationContainer.remove();
+                closeModal();
             });
             examinationContainer.appendChild(attackButton);
 
@@ -834,7 +818,7 @@
             const cardElement = document.createElement('div');
             // cardElement.textContent = cardDB[card].name;
             cardElement.classList.add('pkcard');
-            
+
             if (who == "player") {
                 console.log("HO")
                 try {
@@ -863,12 +847,26 @@
     };
 
 
+
+    function createDamage(card, ele) {
+        
+        const eneryBoard = document.createElement('div');
+        // cardElement.textContent = cardDB[card].name;
+        eneryBoard.classList.add('damage-bar');
+
+        eneryBoard.textContent = card["dmg"]
+        ele.appendChild(eneryBoard)
+    };
+
+
     function createEnergies(card, ele) {
+        
         const eneryBoard = document.createElement('div');
         // cardElement.textContent = cardDB[card].name;
         eneryBoard.classList.add('energy-bar');
 
         for (i in card["energies"]) {
+            console.log("H")
             let energy = document.createElement('div')
             energy.classList.add('energy');
             energy.classList.add(card["energies"][i]);
@@ -877,6 +875,11 @@
         }
         ele.appendChild(eneryBoard)
     };
+    
+
+
+
+
 
 
     function populate_field(who, field) {
@@ -892,6 +895,7 @@
                 // Perform actions when the card is clicked
                 showOptions(field["active"]["card"], null, "active");
             });
+            createDamage(field["active"], cardElement);
             createEnergies(field["active"], cardElement);
             document.getElementById(who + "-active").appendChild(cardElement);
         }
@@ -907,6 +911,7 @@
             cardElement.addEventListener('click', () => {
                 showOptions(field["bench"][i]["card"], null, "bench");
             });
+            createDamage(field["bench"][i], cardElement);
             createEnergies(field["bench"][i], cardElement);
             document.getElementById(who + "-bench").appendChild(cardElement);
         }

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+
+
+    <input type="text" name="opponent_name" id="opponent_name">
+    <input type="hidden" name="type" id="type" value="invite">
+    <input type="submit">
+</form>
+
+Matches You Tries Starting
+<table>
+    <tr>
+        <th>Player</th>
+        <th>Deck</th>
+        <th>Cancel</th>
+    </tr>
+    {% if match_invites %}
+    {% for match in match_invites %}
+    <tr>
+        <td>{{ match.invited }}</td>
+        <td>Deck Name Here</td>
+        <td><button>x</button></td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+</table>
+
+Matches You Invited Players
+
+{% if match_invited %}
+<table>
+    <tr>
+        <th>Player</th>
+        <th>Deck</th>
+        <th>Cancel</th>
+    </tr>
+    {% for match in match_invited %}
+    <tr>
+        <td>{{ match.inviter }}</td>
+        <td>Deck Name Here</td>
+        <td>
+            <form method="post">
+                <input type="hidden" name="rType" value="accept">
+                <input type="hidden" name="opponentName" value="{{ match._id }}">
+                <input type="submit" value="Accept">
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+
+
+<p>You have not match invites</p>
+
+
+{% endif %}
+
+
+
+{% endblock %}
